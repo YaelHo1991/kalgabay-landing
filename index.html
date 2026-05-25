@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="KalGabay - מערכת חכמה לניהול בית הכנסת, מצוות ומתפללים">
+    <meta name="keywords" content="בית כנסת, גבאי, ניהול מצוות, QR, מתפללים">
+    <title>KalGabay - ניהול בית הכנסת בקלות</title>
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+
+    <!-- Favicon (update with your logo) -->
+    <link rel="icon" type="image/png" href="images/logo.png">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="#" class="logo">
+                <img src="images/logo.png" alt="KalGabay Logo" id="nav-logo" onerror="this.style.display='none'; document.getElementById('logo-text').style.display='block';">
+                <span id="logo-text" class="logo-text">KalGabay</span>
+            </a>
+            <ul class="nav-links">
+                <li><a href="#features">תכונות</a></li>
+                <li><a href="#products">מוצרים</a></li>
+                <li><a href="#video">הדרכה</a></li>
+                <li><a href="#faq">שאלות נפוצות</a></li>
+                <li><a href="#contact">צור קשר</a></li>
+            </ul>
+            <button class="mobile-menu-btn" aria-label="תפריט">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1 id="hero-title">KalGabay</h1>
+                <p class="tagline" id="hero-tagline">ניהול בית הכנסת בקלות ויעילות</p>
+                <p class="description" id="hero-description">מערכת חכמה לניהול מצוות, מתפללים ותשלומים בבית הכנסת</p>
+                <div class="hero-buttons">
+                    <a href="#download" class="btn btn-primary" id="download-btn">
+                        <i class="fab fa-google-play"></i>
+                        הורד את האפליקציה
+                    </a>
+                    <a href="#video" class="btn btn-secondary">
+                        <i class="fas fa-play-circle"></i>
+                        צפה בהדרכה
+                    </a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <img src="images/app-mockup.png" alt="KalGabay App" onerror="this.src='https://via.placeholder.com/400x600/C9A86C/ffffff?text=KalGabay+App'">
+            </div>
+        </div>
+    </header>
+
+    <!-- Features Section -->
+    <section id="features" class="features">
+        <div class="container">
+            <h2 class="section-title">למה KalGabay?</h2>
+            <div class="features-grid" id="features-grid">
+                <!-- Features will be loaded from config.js -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Products Section -->
+    <section id="products" class="products">
+        <div class="container">
+            <h2 class="section-title">המוצרים שלנו</h2>
+
+            <!-- Main Package -->
+            <div class="main-package" id="main-package">
+                <!-- Will be loaded from config.js -->
+            </div>
+
+            <!-- Additional Products -->
+            <h3 class="subsection-title">מוצרים נלווים</h3>
+            <div class="products-grid" id="additional-products">
+                <!-- Will be loaded from config.js -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Video Section -->
+    <section id="video" class="video-section">
+        <div class="container">
+            <h2 class="section-title" id="video-title">איך להשתמש ב-KalGabay?</h2>
+            <p class="section-description" id="video-description">סרטון הדרכה קצר שמסביר את כל התכונות של המערכת</p>
+            <div class="video-container" id="video-container">
+                <!-- Video or placeholder will be loaded from config.js -->
+                <div class="video-placeholder">
+                    <i class="fas fa-video"></i>
+                    <p>סרטון ההדרכה יהיה זמין בקרוב!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Download Section -->
+    <section id="download" class="download-section">
+        <div class="container">
+            <h2 class="section-title">הורד את האפליקציה</h2>
+            <div class="download-content">
+                <div class="qr-codes">
+                    <div class="qr-code-box">
+                        <h4>סרוק להורדה</h4>
+                        <div class="qr-code" id="download-qr">
+                            <!-- QR code will be generated -->
+                            <div class="qr-placeholder">
+                                <i class="fas fa-qrcode"></i>
+                                <p>QR Code</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="qr-code-box">
+                        <h4>סרוק לצפייה בסרטון</h4>
+                        <div class="qr-code" id="video-qr">
+                            <!-- QR code will be generated -->
+                            <div class="qr-placeholder">
+                                <i class="fas fa-qrcode"></i>
+                                <p>QR Code</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="download-buttons">
+                    <a href="#" class="store-btn google-play" id="google-play-btn">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/7/78/Google_Play_Store_badge_EN.svg" alt="Google Play">
+                    </a>
+                    <p class="coming-soon" id="coming-soon-message" style="display: none;">
+                        האפליקציה תהיה זמינה בקרוב!
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section id="faq" class="faq-section">
+        <div class="container">
+            <h2 class="section-title">שאלות נפוצות</h2>
+            <div class="faq-list" id="faq-list">
+                <!-- FAQ will be loaded from config.js -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section id="contact" class="contact-section">
+        <div class="container">
+            <h2 class="section-title">צור קשר</h2>
+            <div class="contact-options">
+                <a href="#" class="contact-card" id="contact-email">
+                    <i class="fas fa-envelope"></i>
+                    <span>אימייל</span>
+                </a>
+                <a href="#" class="contact-card" id="contact-phone">
+                    <i class="fas fa-phone"></i>
+                    <span>טלפון</span>
+                </a>
+                <a href="#" class="contact-card" id="contact-whatsapp">
+                    <i class="fab fa-whatsapp"></i>
+                    <span>WhatsApp</span>
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <span class="logo-text">KalGabay</span>
+                    <p>ניהול בית הכנסת בקלות ויעילות</p>
+                </div>
+                <div class="footer-links">
+                    <a href="#features">תכונות</a>
+                    <a href="#products">מוצרים</a>
+                    <a href="#video">הדרכה</a>
+                    <a href="#contact">צור קשר</a>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; <span id="current-year">2024</span> KalGabay. כל הזכויות שמורות.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Config and Scripts -->
+    <script src="config.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
