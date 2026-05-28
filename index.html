@@ -30,6 +30,7 @@
             <ul class="nav-links">
                 <li><a href="#features">תכונות</a></li>
                 <li><a href="#products">מוצרים</a></li>
+                <li><a href="#register">הרשמה</a></li>
                 <li><a href="#video">הדרכה</a></li>
                 <li><a href="#faq">שאלות נפוצות</a></li>
                 <li><a href="#contact">צור קשר</a></li>
@@ -102,6 +103,91 @@
                 <div class="video-placeholder">
                     <i class="fas fa-video"></i>
                     <p>סרטון ההדרכה יהיה זמין בקרוב!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Registration Section -->
+    <section id="register" class="register-section">
+        <div class="container">
+            <h2 class="section-title">הרשמה למערכת</h2>
+            <p class="section-description">הירשמו עכשיו וקבלו גישה מיידית לאפליקציה</p>
+
+            <div class="register-form-container">
+                <form id="register-form" class="register-form">
+                    <div class="form-group">
+                        <label for="synagogue-name">
+                            <i class="fas fa-synagogue"></i>
+                            שם בית הכנסת
+                        </label>
+                        <input type="text" id="synagogue-name" name="synagogueName" required
+                               placeholder="לדוגמה: בית הכנסת אור חדש">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="contact-name">
+                            <i class="fas fa-user"></i>
+                            שם הגבאי / איש קשר
+                        </label>
+                        <input type="text" id="contact-name" name="contactName" required
+                               placeholder="השם המלא שלך">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">
+                            <i class="fas fa-envelope"></i>
+                            כתובת אימייל
+                        </label>
+                        <input type="email" id="email" name="email" required
+                               placeholder="example@email.com">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="phone">
+                            <i class="fas fa-phone"></i>
+                            מספר טלפון
+                        </label>
+                        <input type="tel" id="phone" name="phone" required
+                               placeholder="050-1234567">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">
+                            <i class="fas fa-lock"></i>
+                            סיסמה
+                        </label>
+                        <input type="password" id="password" name="password" required
+                               minlength="6" placeholder="לפחות 6 תווים">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password-confirm">
+                            <i class="fas fa-lock"></i>
+                            אימות סיסמה
+                        </label>
+                        <input type="password" id="password-confirm" name="passwordConfirm" required
+                               minlength="6" placeholder="הזן שוב את הסיסמה">
+                    </div>
+
+                    <div id="form-error" class="form-error" style="display: none;"></div>
+                    <div id="form-success" class="form-success" style="display: none;"></div>
+
+                    <button type="submit" class="btn btn-primary btn-full" id="submit-btn">
+                        <i class="fas fa-user-plus"></i>
+                        הירשם וקבל גישה
+                    </button>
+                </form>
+
+                <div class="register-info">
+                    <h4>מה מקבלים?</h4>
+                    <ul>
+                        <li><i class="fas fa-check"></i> גישה מיידית לאפליקציה</li>
+                        <li><i class="fas fa-check"></i> ניהול מתפללים ומצוות</li>
+                        <li><i class="fas fa-check"></i> שליחת הודעות תשלום</li>
+                        <li><i class="fas fa-check"></i> סנכרון בין מכשירים</li>
+                        <li><i class="fas fa-check"></i> תמיכה טכנית</li>
+                    </ul>
                 </div>
             </div>
         </div>
@@ -202,5 +288,8 @@
     <script src="config.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="main.js"></script>
+
+    <!-- Firebase SDK -->
+    <script type="module" src="firebase-auth.js"></script>
 </body>
 </html>
