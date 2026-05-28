@@ -27,15 +27,15 @@ const CONFIG = {
     // APP DOWNLOAD LINKS
     // ============================================
     appLinks: {
-        // Set to true when the app is available in stores
-        isAvailable: false,
+        // Set to true when the app is available
+        isAvailable: true,
 
-        // Update these when the app is published
+        // Google Play (when published)
         googlePlay: "https://play.google.com/store/apps/details?id=com.kalgabay.app",
         appStore: "https://apps.apple.com/app/kalgabay/id000000000",
 
-        // Direct APK download (optional, for testing)
-        directDownload: "",
+        // Direct download from Google Drive
+        directDownload: "https://drive.google.com/drive/folders/1LPVloymnqPb4yI9EuYBCv57eEd7U9qky?usp=sharing",
 
         // Message shown when app is not yet available
         comingSoonMessage: "האפליקציה תהיה זמינה בקרוב בחנות Google Play!"

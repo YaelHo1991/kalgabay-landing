@@ -675,6 +675,32 @@ h1, h2, h3, h4, h5, h6 {
     transform: scale(1.05);
 }
 
+/* Direct Download Button Style */
+.direct-download-btn {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 10px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    padding: 15px 30px;
+    border-radius: var(--border-radius);
+    font-size: 1.2rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: var(--transition);
+    box-shadow: var(--shadow);
+}
+
+.direct-download-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-hover);
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--secondary) 100%);
+}
+
+.direct-download-btn i {
+    font-size: 1.4rem;
+}
+
 .coming-soon {
     background: rgba(255, 255, 255, 0.2);
     padding: 15px 30px;

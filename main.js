@@ -195,16 +195,25 @@ function loadDownloadSection() {
     const comingSoonMessage = document.getElementById('coming-soon-message');
 
     if (CONFIG.appLinks.isAvailable) {
+        // Use direct download link if available, otherwise Google Play
+        const downloadUrl = CONFIG.appLinks.directDownload || CONFIG.appLinks.googlePlay;
+
         if (googlePlayBtn) {
-            googlePlayBtn.href = CONFIG.appLinks.googlePlay;
+            googlePlayBtn.href = downloadUrl;
             googlePlayBtn.style.display = 'inline-block';
+
+            // If using direct download, change the button style
+            if (CONFIG.appLinks.directDownload) {
+                googlePlayBtn.innerHTML = '<i class="fas fa-download"></i> הורד את האפליקציה';
+                googlePlayBtn.classList.add('direct-download-btn');
+            }
         }
         if (comingSoonMessage) {
             comingSoonMessage.style.display = 'none';
         }
 
         // Generate Download QR
-        generateQRCode('download-qr', CONFIG.appLinks.googlePlay);
+        generateQRCode('download-qr', downloadUrl);
     } else {
         if (googlePlayBtn) {
             googlePlayBtn.style.display = 'none';
