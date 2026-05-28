@@ -2,19 +2,19 @@
    KalGabay Landing Page Styles
    ============================================
    Colors based on the app theme:
-   - Primary (Gold): #C9A86C
-   - Dark Brown: #8B7355
-   - Medium Brown: #6B5344
-   - Accent: #5D4E37
+   - Primary (Sky Blue): #4FA8D9
+   - Primary Dark: #1E5AA8
+   - Secondary: #163D75
+   - Accent: #1E5AA8
    ============================================ */
 
 /* CSS Variables */
 :root {
-    --primary: #C9A86C;
-    --primary-dark: #8B7355;
-    --secondary: #6B5344;
-    --accent: #5D4E37;
-    --accent-dark: #4A3D2C;
+    --primary: #4FA8D9;
+    --primary-dark: #1E5AA8;
+    --secondary: #163D75;
+    --accent: #1E5AA8;
+    --accent-dark: #163D75;
     --background: #f6f6f6;
     --background-dark: #e8e8e8;
     --white: #ffffff;
@@ -470,7 +470,7 @@ h1, h2, h3, h4, h5, h6 {
 .form-group input:focus {
     outline: none;
     border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(201, 168, 108, 0.2);
+    box-shadow: 0 0 0 3px rgba(79, 168, 217, 0.2);
 }
 
 .form-group input::placeholder {
@@ -699,6 +699,62 @@ h1, h2, h3, h4, h5, h6 {
 
 .direct-download-btn i {
     font-size: 1.4rem;
+}
+
+/* Platform-specific Download Buttons */
+.download-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 32px;
+    border-radius: var(--border-radius);
+    font-size: 1.15rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: var(--transition);
+    box-shadow: var(--shadow);
+    margin: 10px;
+}
+
+.download-btn i {
+    font-size: 1.8rem;
+}
+
+.windows-btn {
+    background: linear-gradient(135deg, #0078d4 0%, #005a9e 100%);
+    color: white;
+}
+
+.windows-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-hover);
+    background: linear-gradient(135deg, #005a9e 0%, #004578 100%);
+}
+
+.android-btn {
+    background: linear-gradient(135deg, #3ddc84 0%, #00a86b 100%);
+    color: white;
+}
+
+.android-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-hover);
+    background: linear-gradient(135deg, #00a86b 0%, #008555 100%);
+}
+
+.download-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 15px;
+}
+
+@media (max-width: 480px) {
+    .download-btn {
+        width: 100%;
+        justify-content: center;
+        margin: 8px 0;
+    }
 }
 
 .coming-soon {

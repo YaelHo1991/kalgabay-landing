@@ -191,33 +191,35 @@ function loadVideo() {
 // DOWNLOAD SECTION & QR CODES
 // ============================================
 function loadDownloadSection() {
-    const googlePlayBtn = document.getElementById('google-play-btn');
+    const windowsBtn = document.getElementById('windows-download-btn');
+    const androidBtn = document.getElementById('android-download-btn');
     const comingSoonMessage = document.getElementById('coming-soon-message');
 
     if (CONFIG.appLinks.isAvailable) {
-        // Use direct download link if available, otherwise Google Play
-        const downloadUrl = CONFIG.appLinks.directDownload || CONFIG.appLinks.googlePlay;
-
-        if (googlePlayBtn) {
-            googlePlayBtn.href = downloadUrl;
-            googlePlayBtn.style.display = 'inline-block';
-
-            // If using direct download, change the button style
-            if (CONFIG.appLinks.directDownload) {
-                googlePlayBtn.innerHTML = '<i class="fas fa-download"></i> הורד את האפליקציה';
-                googlePlayBtn.classList.add('direct-download-btn');
-            }
+        // Windows download button
+        if (windowsBtn && CONFIG.appLinks.windowsDownload) {
+            windowsBtn.href = CONFIG.appLinks.windowsDownload;
+            windowsBtn.style.display = 'inline-flex';
         }
+
+        // Android download button
+        if (androidBtn && CONFIG.appLinks.androidDownload) {
+            androidBtn.href = CONFIG.appLinks.androidDownload;
+            androidBtn.style.display = 'inline-flex';
+        }
+
         if (comingSoonMessage) {
             comingSoonMessage.style.display = 'none';
         }
 
-        // Generate Download QR
-        generateQRCode('download-qr', downloadUrl);
-    } else {
-        if (googlePlayBtn) {
-            googlePlayBtn.style.display = 'none';
+        // Generate Download QR (use Android link for mobile users)
+        const qrUrl = CONFIG.appLinks.androidDownload || CONFIG.appLinks.windowsDownload;
+        if (qrUrl) {
+            generateQRCode('download-qr', qrUrl);
         }
+    } else {
+        if (windowsBtn) windowsBtn.style.display = 'none';
+        if (androidBtn) androidBtn.style.display = 'none';
         if (comingSoonMessage) {
             comingSoonMessage.textContent = CONFIG.appLinks.comingSoonMessage;
             comingSoonMessage.style.display = 'block';
@@ -333,15 +335,24 @@ function updateFooter() {
 // ============================================
 document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     anchor.addEventListener('click', function(e) {
-        e.preventDefault();
-        const target = document.querySelector(this.getAttribute('href'));
-        if (target) {
-            const navbarHeight = document.querySelector('.navbar').offsetHeight;
-            const targetPosition = target.offsetTop - navbarHeight - 20;
-            window.scrollTo({
-                top: targetPosition,
-                behavior: 'smooth'
-            });
+        const href = this.getAttribute('href');
+        // Only handle internal anchor links (not full URLs or just "#")
+        if (href && href.length > 1 && href.startsWith('#') && !href.includes('://')) {
+            e.preventDefault();
+            try {
+                const target = document.querySelector(href);
+                if (target) {
+                    const navbarHeight = document.querySelector('.navbar').offsetHeight;
+                    const targetPosition = target.offsetTop - navbarHeight - 20;
+                    window.scrollTo({
+                        top: targetPosition,
+                        behavior: 'smooth'
+                    });
+                }
+            } catch (err) {
+                // Invalid selector, let browser handle normally
+                console.log('Smooth scroll skipped for:', href);
+            }
         }
     });
 });

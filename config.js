@@ -30,12 +30,15 @@ const CONFIG = {
         // Set to true when the app is available
         isAvailable: true,
 
+        // Direct download links from Google Drive
+        // Windows EXE
+        windowsDownload: "https://drive.google.com/uc?export=download&id=10KnKOvS132JIjfuwV35QCgyN9o4fGCUM",
+        // Android APK
+        androidDownload: "https://drive.google.com/uc?export=download&id=1yvWXW0cO1-l1gUkqDwpvef5OOfzr12Ug",
+
         // Google Play (when published)
         googlePlay: "https://play.google.com/store/apps/details?id=com.kalgabay.app",
         appStore: "https://apps.apple.com/app/kalgabay/id000000000",
-
-        // Direct download from Google Drive
-        directDownload: "https://drive.google.com/drive/folders/1LPVloymnqPb4yI9EuYBCv57eEd7U9qky?usp=sharing",
 
         // Message shown when app is not yet available
         comingSoonMessage: "האפליקציה תהיה זמינה בקרוב בחנות Google Play!"
