@@ -221,11 +221,11 @@
                     </div>
                 </div>
                 <div class="download-buttons">
-                    <a href="#" class="download-btn windows-btn" id="windows-download-btn" target="_blank" rel="noopener" style="display: none;">
+                    <a href="#" class="download-btn windows-btn" id="windows-download-btn" style="display: none;">
                         <i class="fab fa-windows"></i>
                         <span>הורד ל-Windows</span>
                     </a>
-                    <a href="#" class="download-btn android-btn" id="android-download-btn" target="_blank" rel="noopener" style="display: none;">
+                    <a href="#" class="download-btn android-btn" id="android-download-btn" style="display: none;">
                         <i class="fab fa-android"></i>
                         <span>הורד ל-Android</span>
                     </a>
@@ -292,9 +292,20 @@
     <!-- Config and Scripts -->
     <script src="config.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <!-- Firebase SDK (for dynamic content loading) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+
     <script src="main.js"></script>
 
-    <!-- Firebase SDK -->
+    <!-- Firebase Auth (for registration) -->
     <script type="module" src="firebase-auth.js"></script>
+
+    <!-- Firebase Auth Compat (for admin edit) -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+    <!-- Admin Edit Mode -->
+    <script src="admin-edit.js"></script>
 </body>
 </html>
