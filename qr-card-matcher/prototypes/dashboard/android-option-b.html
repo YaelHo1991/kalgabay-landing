@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>KalGabay - Android Option B - Central FAB</title>
+  <link rel="stylesheet" href="../shared-styles.css">
+  <style>
+    :root {
+      --safe-area-top: 24px;
+      --safe-area-bottom: 20px;
+    }
+
+    body {
+      background: #F8FAFC;
+      min-height: 100vh;
+      max-width: 420px;
+      margin: 0 auto;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Status Bar */
+    .status-bar {
+      height: var(--safe-area-top);
+      background: white;
+    }
+
+    /* Header - Minimal */
+    .header {
+      background: white;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, var(--primary-500), var(--primary-700));
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.1rem;
+    }
+
+    .logo-text {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--primary-700);
+    }
+
+    .header-user {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: var(--gray-100);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+    }
+
+    /* Content */
+    .content {
+      padding: 20px;
+      padding-bottom: 120px;
+    }
+
+    /* Week Compact */
+    .week-compact {
+      background: linear-gradient(135deg, var(--primary-600) 0%, var(--primary-800) 100%);
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 20px;
+      color: white;
+    }
+
+    .week-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+
+    .week-main {
+      flex: 1;
+    }
+
+    .week-label {
+      font-size: 0.8rem;
+      opacity: 0.8;
+      margin-bottom: 4px;
+    }
+
+    .week-parasha {
+      font-size: 1.6rem;
+      font-weight: 700;
+    }
+
+    .week-date {
+      font-size: 0.9rem;
+      opacity: 0.85;
+      margin-top: 4px;
+    }
+
+    .week-nav-btns {
+      display: flex;
+      gap: 6px;
+    }
+
+    .week-nav-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .week-stats {
+      display: flex;
+      gap: 20px;
+    }
+
+    .week-stat {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .week-stat-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+    }
+
+    .week-stat-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+
+    .week-stat-label {
+      font-size: 0.75rem;
+      opacity: 0.8;
+    }
+
+    /* Quick Stats Cards */
+    .stats-scroll {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin: 0 -20px;
+      padding: 0 20px 12px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .stats-scroll::-webkit-scrollbar {
+      display: none;
+    }
+
+    .mini-stat {
+      background: white;
+      border-radius: 16px;
+      padding: 18px 20px;
+      min-width: 130px;
+      box-shadow: var(--shadow-sm);
+      flex-shrink: 0;
+    }
+
+    .mini-stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+
+    .mini-stat-label {
+      font-size: 0.8rem;
+      color: var(--gray-500);
+      margin-top: 4px;
+    }
+
+    .mini-stat.highlight {
+      background: linear-gradient(135deg, #059669, #10B981);
+      color: white;
+    }
+
+    .mini-stat.highlight .mini-stat-value,
+    .mini-stat.highlight .mini-stat-label {
+      color: white;
+    }
+
+    /* Section */
+    .section {
+      margin-bottom: 24px;
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .section-link {
+      font-size: 0.85rem;
+      color: var(--primary-600);
+      font-weight: 500;
+    }
+
+    /* Purchase Cards */
+    .purchase-cards {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .purchase-card {
+      background: white;
+      border-radius: 18px;
+      padding: 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .purchase-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 14px;
+      background: var(--primary-100);
+      color: var(--primary-600);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .purchase-info {
+      flex: 1;
+    }
+
+    .purchase-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .purchase-name {
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .purchase-price {
+      font-weight: 700;
+      color: var(--primary-600);
+      font-size: 1.05rem;
+    }
+
+    .purchase-mitzva {
+      font-size: 0.85rem;
+      color: var(--gray-500);
+      margin-top: 2px;
+    }
+
+    .purchase-status {
+      font-size: 0.7rem;
+      padding: 4px 10px;
+      border-radius: 8px;
+    }
+
+    .purchase-status.paid {
+      background: var(--success-100);
+      color: var(--success-600);
+    }
+
+    .purchase-status.unpaid {
+      background: var(--warning-100);
+      color: var(--warning-600);
+    }
+
+    /* Quick Actions Horizontal */
+    .quick-actions {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin: 0 -20px;
+      padding: 0 20px 12px;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .quick-actions::-webkit-scrollbar {
+      display: none;
+    }
+
+    .quick-action {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 20px;
+      background: white;
+      border-radius: 14px;
+      box-shadow: var(--shadow-sm);
+      flex-shrink: 0;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .quick-action:active {
+      transform: scale(0.97);
+    }
+
+    .quick-action-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .quick-action:nth-child(1) .quick-action-icon { background: var(--primary-100); }
+    .quick-action:nth-child(2) .quick-action-icon { background: #D1FAE5; }
+    .quick-action:nth-child(3) .quick-action-icon { background: #FEF3C7; }
+    .quick-action:nth-child(4) .quick-action-icon { background: #EDE9FE; }
+
+    .quick-action-text {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--gray-700);
+    }
+
+    /* Bottom Tab Bar */
+    .bottom-tabs {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 420px;
+      background: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding: 8px 24px calc(8px + var(--safe-area-bottom));
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
+    }
+
+    .tab-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      padding: 6px 10px;
+    }
+
+    .tab-icon {
+      font-size: 1.3rem;
+      color: var(--gray-400);
+    }
+
+    .tab-item.active .tab-icon {
+      color: var(--primary-600);
+    }
+
+    .tab-label {
+      font-size: 0.65rem;
+      color: var(--gray-400);
+      font-weight: 500;
+    }
+
+    .tab-item.active .tab-label {
+      color: var(--primary-600);
+    }
+
+    /* Central FAB */
+    .fab-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: -36px;
+    }
+
+    .fab {
+      width: 68px;
+      height: 68px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, var(--primary-500), var(--primary-700));
+      color: white;
+      border: none;
+      font-size: 1.8rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px rgba(28, 100, 242, 0.4);
+      cursor: pointer;
+    }
+
+    .fab-label {
+      font-size: 0.7rem;
+      color: var(--primary-600);
+      font-weight: 600;
+      margin-top: 6px;
+    }
+
+    /* Floating Alert */
+    .alert-card {
+      background: linear-gradient(135deg, #F59E0B, #D97706);
+      border-radius: 16px;
+      padding: 16px 18px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      color: white;
+    }
+
+    .alert-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+    }
+
+    .alert-content {
+      flex: 1;
+    }
+
+    .alert-title {
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+
+    .alert-text {
+      font-size: 0.85rem;
+      opacity: 0.9;
+    }
+
+    .alert-action {
+      padding: 10px 16px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="status-bar"></div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-logo">
+      <div class="logo-icon">🏛️</div>
+      <div class="logo-text">קלגבאי</div>
+    </div>
+    <div class="header-user">👤</div>
+  </header>
+
+  <!-- Content -->
+  <main class="content">
+    <!-- Week Card -->
+    <div class="week-compact">
+      <div class="week-top">
+        <div class="week-main">
+          <div class="week-label">השבת הקרובה</div>
+          <div class="week-parasha">פרשת בהעלותך</div>
+          <div class="week-date">שבת ט"ו סיון תשפ"ו | 30/05</div>
+        </div>
+        <div class="week-nav-btns">
+          <button class="week-nav-btn">→</button>
+          <button class="week-nav-btn">←</button>
+        </div>
+      </div>
+      <div class="week-stats">
+        <div class="week-stat">
+          <div class="week-stat-icon">📜</div>
+          <div>
+            <div class="week-stat-value">5</div>
+            <div class="week-stat-label">פנויות</div>
+          </div>
+        </div>
+        <div class="week-stat">
+          <div class="week-stat-icon">✅</div>
+          <div>
+            <div class="week-stat-value">12</div>
+            <div class="week-stat-label">נמכרו</div>
+          </div>
+        </div>
+        <div class="week-stat">
+          <div class="week-stat-icon">💰</div>
+          <div>
+            <div class="week-stat-value">₪4.2K</div>
+            <div class="week-stat-label">הכנסות</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Alert -->
+    <div class="alert-card">
+      <div class="alert-icon">⚠️</div>
+      <div class="alert-content">
+        <div class="alert-title">3 תשלומים ממתינים</div>
+        <div class="alert-text">₪1,400 טרם נגבו השבוע</div>
+      </div>
+      <button class="alert-action">תזכורות</button>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">פעולות מהירות</span>
+      </div>
+      <div class="quick-actions">
+        <div class="quick-action">
+          <div class="quick-action-icon">🖨️</div>
+          <div class="quick-action-text">הדפסת מדבקות</div>
+        </div>
+        <div class="quick-action">
+          <div class="quick-action-icon">📧</div>
+          <div class="quick-action-text">שליחת תזכורות</div>
+        </div>
+        <div class="quick-action">
+          <div class="quick-action-icon">➕</div>
+          <div class="quick-action-text">שיבוץ ידני</div>
+        </div>
+        <div class="quick-action">
+          <div class="quick-action-icon">📊</div>
+          <div class="quick-action-text">דוחות</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Purchases -->
+    <div class="section">
+      <div class="section-header">
+        <span class="section-title">רכישות אחרונות</span>
+        <span class="section-link">הצג הכל</span>
+      </div>
+      <div class="purchase-cards">
+        <div class="purchase-card">
+          <div class="purchase-avatar">יכ</div>
+          <div class="purchase-info">
+            <div class="purchase-row">
+              <div class="purchase-name">יוסי כהן</div>
+              <div class="purchase-price">₪180</div>
+            </div>
+            <div class="purchase-row">
+              <div class="purchase-mitzva">עליה לתורה - שלישי</div>
+              <div class="purchase-status paid">שולם</div>
+            </div>
+          </div>
+        </div>
+        <div class="purchase-card">
+          <div class="purchase-avatar">של</div>
+          <div class="purchase-info">
+            <div class="purchase-row">
+              <div class="purchase-name">שמעון לוי</div>
+              <div class="purchase-price">₪350</div>
+            </div>
+            <div class="purchase-row">
+              <div class="purchase-mitzva">פתיחת ההיכל</div>
+              <div class="purchase-status unpaid">ממתין</div>
+            </div>
+          </div>
+        </div>
+        <div class="purchase-card">
+          <div class="purchase-avatar">דב</div>
+          <div class="purchase-info">
+            <div class="purchase-row">
+              <div class="purchase-name">דוד ברק</div>
+              <div class="purchase-price">₪200</div>
+            </div>
+            <div class="purchase-row">
+              <div class="purchase-mitzva">הפטרה</div>
+              <div class="purchase-status paid">שולם</div>
+            </div>
+          </div>
+        </div>
+        <div class="purchase-card">
+          <div class="purchase-avatar">אג</div>
+          <div class="purchase-info">
+            <div class="purchase-row">
+              <div class="purchase-name">אברהם גולן</div>
+              <div class="purchase-price">₪150</div>
+            </div>
+            <div class="purchase-row">
+              <div class="purchase-mitzva">הגבהה</div>
+              <div class="purchase-status unpaid">ממתין</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom Tabs -->
+  <nav class="bottom-tabs">
+    <div class="tab-item active">
+      <span class="tab-icon">🏠</span>
+      <span class="tab-label">ראשי</span>
+    </div>
+    <div class="tab-item">
+      <span class="tab-icon">👥</span>
+      <span class="tab-label">מתפללים</span>
+    </div>
+    <div class="fab-container">
+      <button class="fab">📷</button>
+      <span class="fab-label">סריקה</span>
+    </div>
+    <div class="tab-item">
+      <span class="tab-icon">📜</span>
+      <span class="tab-label">מצוות</span>
+    </div>
+    <div class="tab-item">
+      <span class="tab-icon">📊</span>
+      <span class="tab-label">ארכיון</span>
+    </div>
+  </nav>
+</body>
+</html>

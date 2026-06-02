@@ -1,0 +1,45 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+target/
+*.apk
+*.idsig
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+nul
+
+# Secrets and credentials
+*.keystore
+client_secret*.json
+.env
+.env.local
+
+# Android build files
+qr-card-matcher/src-tauri/gen/android/.gradle/
+qr-card-matcher/src-tauri/gen/android/app/build/
+qr-card-matcher/src-tauri/gen/android/build/
+qr-card-matcher/src-tauri/gen/android/buildSrc/.kotlin/
+
+# Rust build files
+qr-card-matcher/src-tauri/target/
+
+# Test data
+test-data/
+
+# Archives
+*.zip
+
+# Claude settings
+.claude/

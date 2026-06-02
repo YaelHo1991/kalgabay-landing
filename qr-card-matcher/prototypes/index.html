@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KalGabay - UI Prototypes</title>
+  <link rel="stylesheet" href="shared-styles.css">
+  <style>
+    body {
+      min-height: 100vh;
+      padding: 48px;
+      background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .hero-icon {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, var(--primary-500), var(--primary-700));
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.5rem;
+      margin: 0 auto 24px;
+      box-shadow: 0 12px 32px rgba(28, 100, 242, 0.3);
+    }
+
+    .hero-title {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 12px;
+    }
+
+    .hero-subtitle {
+      font-size: 1.1rem;
+      color: var(--gray-500);
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.7;
+    }
+
+    /* Prototypes Grid */
+    .prototypes-section {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .section-number {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--primary-500);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1.2rem;
+    }
+
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .section-desc {
+      color: var(--gray-500);
+      font-size: 0.9rem;
+      margin-top: 2px;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 24px;
+      margin-bottom: 48px;
+    }
+
+    .prototype-card {
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .prototype-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+    }
+
+    .prototype-card a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .card-preview {
+      height: 180px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-preview-icon {
+      font-size: 3rem;
+      color: white;
+      z-index: 1;
+    }
+
+    .card-preview.dashboard { background: linear-gradient(135deg, #1C64F2, #3F83F8); }
+    .card-preview.management { background: linear-gradient(135deg, #7C3AED, #A78BFA); }
+    .card-preview.printing { background: linear-gradient(135deg, #059669, #10B981); }
+    .card-preview.scanning { background: linear-gradient(135deg, #F59E0B, #FBBF24); }
+    .card-preview.archive { background: linear-gradient(135deg, #DC2626, #F87171); }
+
+    .card-body {
+      padding: 24px;
+    }
+
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 8px;
+    }
+
+    .card-desc {
+      font-size: 0.9rem;
+      color: var(--gray-500);
+      line-height: 1.5;
+      margin-bottom: 16px;
+    }
+
+    .card-badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      font-size: 0.75rem;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-weight: 500;
+    }
+
+    .badge.desktop {
+      background: var(--primary-100);
+      color: var(--primary-700);
+    }
+
+    .badge.android {
+      background: #FEF3C7;
+      color: #D97706;
+    }
+
+    .badge.demo {
+      background: #D1FAE5;
+      color: #059669;
+    }
+
+    .badge.multiple {
+      background: #EDE9FE;
+      color: #7C3AED;
+    }
+
+    /* Features Section */
+    .features-section {
+      background: white;
+      border-radius: 24px;
+      padding: 40px;
+      margin-top: 48px;
+      max-width: 1400px;
+      margin-left: auto;
+      margin-right: auto;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.05);
+    }
+
+    .features-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 28px;
+      text-align: center;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+
+    .feature-card {
+      background: var(--gray-50);
+      border-radius: 16px;
+      padding: 24px;
+    }
+
+    .feature-icon {
+      font-size: 1.8rem;
+      margin-bottom: 14px;
+    }
+
+    .feature-title {
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 8px;
+    }
+
+    .feature-desc {
+      font-size: 0.9rem;
+      color: var(--gray-500);
+      line-height: 1.5;
+    }
+
+    /* Footer */
+    .footer {
+      text-align: center;
+      padding: 48px;
+      color: var(--gray-400);
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-icon">🏛️</div>
+    <h1 class="hero-title">קלגבאי - פרוטוטייפים</h1>
+    <p class="hero-subtitle">
+      אוסף של פרוטוטייפים עבור ממשק המשתמש החדש. כל פרוטוטייפ כולל גרסאות למחשב ולאנדרואיד.
+      לחץ על כל כרטיס כדי לראות את הפרוטוטייפ.
+    </p>
+  </section>
+
+  <!-- Prototypes -->
+  <section class="prototypes-section">
+    <!-- Dashboard -->
+    <div class="section-header">
+      <div class="section-number">1</div>
+      <div>
+        <h2 class="section-title">דשבורד ראשי</h2>
+        <p class="section-desc">מספר אפשרויות פרישה לדף הבית הראשי</p>
+      </div>
+    </div>
+    <div class="cards-grid">
+      <div class="prototype-card">
+        <a href="dashboard/index.html">
+          <div class="card-preview dashboard">
+            <span class="card-preview-icon">🏠</span>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">דשבורד ראשי</h3>
+            <p class="card-desc">3 אפשרויות עיצוב שונות למחשב ו-2 אפשרויות לאנדרואיד. כולל סטטיסטיקות, בורר שבוע, ופעולות מהירות.</p>
+            <div class="card-badges">
+              <span class="badge desktop">מחשב</span>
+              <span class="badge android">אנדרואיד</span>
+              <span class="badge multiple">5 אפשרויות</span>
+            </div>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Management -->
+    <div class="section-header">
+      <div class="section-number">2</div>
+      <div>
+        <h2 class="section-title">ניהול מתפללים ומצוות</h2>
+        <p class="section-desc">הוספה, עריכה, מחיקה וצפייה במאגר</p>
+      </div>
+    </div>
+    <div class="cards-grid">
+      <div class="prototype-card">
+        <a href="management/index.html">
+          <div class="card-preview management">
+            <span class="card-preview-icon">👥</span>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">ניהול מתפללים ומצוות</h3>
+            <p class="card-desc">ממשק לניהול מאגר המתפללים והמצוות. כולל תצוגת כרטיסים, חיפוש, סינון ופעולות מהירות.</p>
+            <div class="card-badges">
+              <span class="badge desktop">מחשב</span>
+              <span class="badge android">אנדרואיד</span>
+            </div>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Printing -->
+    <div class="section-header">
+      <div class="section-number">3</div>
+      <div>
+        <h2 class="section-title">הדפסת מדבקות</h2>
+        <p class="section-desc">תהליך הדפסה מלא מההתחלה ועד הסוף</p>
+      </div>
+    </div>
+    <div class="cards-grid">
+      <div class="prototype-card">
+        <a href="printing/index.html">
+          <div class="card-preview printing">
+            <span class="card-preview-icon">🖨️</span>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">תהליך הדפסת מדבקות</h3>
+            <p class="card-desc">דמו אינטראקטיבי מלא: בחירת סוג → בחירת פריטים → בחירת מיקום על הדף → תצוגה מקדימה והדפסה. כולל תכונת זיכרון מיקומים.</p>
+            <div class="card-badges">
+              <span class="badge demo">דמו מלא</span>
+              <span class="badge desktop">4 שלבים</span>
+            </div>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Scanning -->
+    <div class="section-header">
+      <div class="section-number">4</div>
+      <div>
+        <h2 class="section-title">סריקה ושיבוץ</h2>
+        <p class="section-desc">התהליך המרכזי - קישור מתפלל עם המצוות שרכש</p>
+      </div>
+    </div>
+    <div class="cards-grid">
+      <div class="prototype-card">
+        <a href="scanning/index.html">
+          <div class="card-preview scanning">
+            <span class="card-preview-icon">📷</span>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">סריקת QR ושיבוץ</h3>
+            <p class="card-desc">סריקת מעטפת מתפלל, סריקת כרטיסי מצוות, עדכון מחירים ושמירה. כולל ממשק סל רכישות.</p>
+            <div class="card-badges">
+              <span class="badge desktop">מחשב</span>
+              <span class="badge android">אנדרואיד</span>
+            </div>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Archive -->
+    <div class="section-header">
+      <div class="section-number">5</div>
+      <div>
+        <h2 class="section-title">ארכיון</h2>
+        <p class="section-desc">צפייה בהיסטוריית הרכישות לפי שבוע</p>
+      </div>
+    </div>
+    <div class="cards-grid">
+      <div class="prototype-card">
+        <a href="archive/index.html">
+          <div class="card-preview archive">
+            <span class="card-preview-icon">📊</span>
+          </div>
+          <div class="card-body">
+            <h3 class="card-title">תצוגת ארכיון</h3>
+            <p class="card-desc">היסטוריית רכישות לפי שבוע. תצוגה לפי מצוות או לפי מתפללים, סינון, חיפוש וייצוא לאקסל.</p>
+            <div class="card-badges">
+              <span class="badge desktop">מחשב</span>
+              <span class="badge android">אנדרואיד</span>
+            </div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features-section">
+    <h2 class="features-title">✨ עקרונות עיצוב</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🎨</div>
+        <h3 class="feature-title">עיצוב מודרני ונקי</h3>
+        <p class="feature-desc">פלטת צבעים מינימליסטית בגווני כחול, פינות מעוגלות, וצללים עדינים ליצירת עומק.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📱</div>
+        <h3 class="feature-title">התאמה למובייל</h3>
+        <p class="feature-desc">כל מסך מותאם לאנדרואיד עם ניווט תחתון, כפתורי FAB, ואזורי מגע גדולים.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔄</div>
+        <h3 class="feature-title">זרימה אינטואיטיבית</h3>
+        <p class="feature-desc">תהליכים ברורים עם צעדים מוגדרים, סטטוס ויזואלי, והנחיות למשתמש.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🧠</div>
+        <h3 class="feature-title">תכונות חכמות</h3>
+        <p class="feature-desc">זיכרון מיקומים בהדפסה, סריקה מהירה, ואוטומציה של משימות חוזרות.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>פרוטוטייפים לקלגבאי • 2026</p>
+  </footer>
+</body>
+</html>

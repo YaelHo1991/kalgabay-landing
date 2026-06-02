@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>KalGabay - QR Scanning Android Flow</title>
+  <link rel="stylesheet" href="../shared-styles.css">
+  <style>
+    :root {
+      --safe-area-top: 24px;
+      --safe-area-bottom: 20px;
+    }
+
+    body {
+      background: var(--gray-900);
+      min-height: 100vh;
+      max-width: 420px;
+      margin: 0 auto;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Status Bar */
+    .status-bar {
+      height: var(--safe-area-top);
+      background: transparent;
+    }
+
+    /* Full Screen Scanner */
+    .scanner-fullscreen {
+      position: fixed;
+      inset: 0;
+      max-width: 420px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Scanner Header */
+    .scanner-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: calc(var(--safe-area-top) + 16px) 20px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      background: linear-gradient(180deg, rgba(0,0,0,0.7) 0%, transparent 100%);
+    }
+
+    .scanner-back {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: white;
+      font-size: 1.2rem;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+    }
+
+    .scanner-title {
+      color: white;
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .scanner-flash {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: white;
+      font-size: 1.2rem;
+      cursor: pointer;
+      backdrop-filter: blur(10px);
+    }
+
+    /* Scanner Viewport */
+    .scanner-viewport {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      background: linear-gradient(135deg, #1a1a2e, #16213e);
+    }
+
+    .scanner-frame {
+      width: 260px;
+      height: 260px;
+      position: relative;
+    }
+
+    .frame-corner {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border: 4px solid var(--primary-400);
+    }
+
+    .frame-corner.top-right {
+      top: 0;
+      right: 0;
+      border-left: none;
+      border-bottom: none;
+      border-top-right-radius: 16px;
+    }
+
+    .frame-corner.top-left {
+      top: 0;
+      left: 0;
+      border-right: none;
+      border-bottom: none;
+      border-top-left-radius: 16px;
+    }
+
+    .frame-corner.bottom-right {
+      bottom: 0;
+      right: 0;
+      border-left: none;
+      border-top: none;
+      border-bottom-right-radius: 16px;
+    }
+
+    .frame-corner.bottom-left {
+      bottom: 0;
+      left: 0;
+      border-right: none;
+      border-top: none;
+      border-bottom-left-radius: 16px;
+    }
+
+    .scanner-line {
+      position: absolute;
+      left: 20px;
+      right: 20px;
+      height: 3px;
+      background: linear-gradient(90deg, transparent, var(--primary-400), transparent);
+      animation: scan 2s ease-in-out infinite;
+    }
+
+    @keyframes scan {
+      0%, 100% { top: 30px; }
+      50% { top: calc(100% - 30px); }
+    }
+
+    .scanner-hint {
+      position: absolute;
+      bottom: -50px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255,255,255,0.7);
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+
+    /* Bottom Panel */
+    .bottom-panel {
+      background: white;
+      border-radius: 28px 28px 0 0;
+      padding: 24px 20px calc(24px + var(--safe-area-bottom));
+      position: relative;
+      z-index: 10;
+    }
+
+    .panel-handle {
+      width: 36px;
+      height: 4px;
+      background: var(--gray-300);
+      border-radius: 2px;
+      margin: 0 auto 20px;
+    }
+
+    /* Member Badge */
+    .member-badge {
+      background: var(--primary-50);
+      border: 1px solid var(--primary-200);
+      border-radius: 14px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .member-badge-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: white;
+      color: var(--primary-600);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+    }
+
+    .member-badge-info {
+      flex: 1;
+    }
+
+    .member-badge-name {
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .member-badge-label {
+      font-size: 0.8rem;
+      color: var(--primary-600);
+    }
+
+    .member-badge-clear {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: white;
+      border: none;
+      color: var(--gray-400);
+      cursor: pointer;
+    }
+
+    /* Cart Summary */
+    .cart-summary {
+      background: var(--gray-50);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 20px;
+    }
+
+    .cart-summary-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+
+    .cart-count {
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .cart-expand {
+      font-size: 0.85rem;
+      color: var(--primary-600);
+      cursor: pointer;
+    }
+
+    .cart-items-preview {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+
+    .cart-item-tag {
+      background: white;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      color: var(--gray-700);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .cart-item-price {
+      font-weight: 600;
+      color: var(--primary-600);
+    }
+
+    .cart-total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 14px;
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .cart-total-label {
+      color: var(--gray-600);
+    }
+
+    .cart-total-value {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--primary-600);
+    }
+
+    /* Action Buttons */
+    .action-buttons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .action-btn {
+      flex: 1;
+      padding: 16px;
+      border-radius: 14px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .action-btn.primary {
+      background: linear-gradient(135deg, var(--success-500), #059669);
+      color: white;
+      border: none;
+    }
+
+    .action-btn.secondary {
+      background: var(--gray-100);
+      color: var(--gray-600);
+      border: none;
+    }
+
+    /* Scan Mode Indicator */
+    .scan-mode {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0,0,0,0.7);
+      padding: 12px 24px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: white;
+      backdrop-filter: blur(10px);
+    }
+
+    .scan-mode-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--success-500);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    /* Demo navigation */
+    .demo-nav {
+      position: fixed;
+      top: calc(var(--safe-area-top) + 70px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.7);
+      padding: 10px 20px;
+      border-radius: 12px;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      z-index: 20;
+      backdrop-filter: blur(10px);
+    }
+
+    .demo-nav a {
+      color: white;
+      text-decoration: none;
+      font-size: 0.8rem;
+      opacity: 0.7;
+    }
+
+    .demo-nav a:hover {
+      opacity: 1;
+    }
+
+    .demo-nav span {
+      color: var(--gray-400);
+      font-size: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- Full Screen Scanner -->
+  <div class="scanner-fullscreen">
+    <div class="status-bar"></div>
+
+    <!-- Scanner Header -->
+    <header class="scanner-header">
+      <button class="scanner-back">←</button>
+      <span class="scanner-title">סריקת מצוות</span>
+      <button class="scanner-flash">🔦</button>
+    </header>
+
+    <!-- Scanner Viewport -->
+    <div class="scanner-viewport">
+      <div class="scanner-frame">
+        <div class="frame-corner top-right"></div>
+        <div class="frame-corner top-left"></div>
+        <div class="frame-corner bottom-right"></div>
+        <div class="frame-corner bottom-left"></div>
+        <div class="scanner-line"></div>
+      </div>
+      <div class="scanner-hint">סרוק את הכרטיס הבא</div>
+
+      <!-- Scan Mode Indicator -->
+      <div class="scan-mode" style="top: auto; bottom: 180px; transform: translateX(-50%);">
+        <div class="scan-mode-dot"></div>
+        <span>מצב סריקת מצוות</span>
+      </div>
+    </div>
+
+    <!-- Bottom Panel -->
+    <div class="bottom-panel">
+      <div class="panel-handle"></div>
+
+      <!-- Member Badge -->
+      <div class="member-badge">
+        <div class="member-badge-avatar">יכ</div>
+        <div class="member-badge-info">
+          <div class="member-badge-name">יוסי כהן</div>
+          <div class="member-badge-label">👤 מתפלל נסרק</div>
+        </div>
+        <button class="member-badge-clear">✕</button>
+      </div>
+
+      <!-- Cart Summary -->
+      <div class="cart-summary">
+        <div class="cart-summary-header">
+          <span class="cart-count">📜 3 מצוות בסל</span>
+          <span class="cart-expand">הצג הכל ↓</span>
+        </div>
+        <div class="cart-items-preview">
+          <div class="cart-item-tag">
+            <span>עליה שלישי</span>
+            <span class="cart-item-price">₪180</span>
+          </div>
+          <div class="cart-item-tag">
+            <span>פתיחת ההיכל</span>
+            <span class="cart-item-price">₪350</span>
+          </div>
+          <div class="cart-item-tag">
+            <span>הגבהה</span>
+            <span class="cart-item-price">₪150</span>
+          </div>
+        </div>
+        <div class="cart-total-row">
+          <span class="cart-total-label">סה"כ:</span>
+          <span class="cart-total-value">₪680</span>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <button class="action-btn secondary">ביטול</button>
+        <button class="action-btn primary">
+          <span>💾</span>
+          שמור ושלח
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Demo Navigation -->
+  <nav class="demo-nav">
+    <span>אנדרואיד</span>
+    <a href="index.html">← חזרה</a>
+    <a href="desktop-flow.html">מחשב</a>
+  </nav>
+</body>
+</html>

@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KalGabay - QR Scanning Flow Demo</title>
+  <link rel="stylesheet" href="../shared-styles.css">
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 40px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 16px;
+      color: var(--primary-700);
+    }
+
+    p {
+      color: var(--gray-600);
+      margin-bottom: 40px;
+      text-align: center;
+      max-width: 600px;
+    }
+
+    .demo-container {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .demo-section {
+      background: white;
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .demo-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--primary-700);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .demo-desc {
+      color: var(--gray-600);
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .flow-steps {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    .flow-step {
+      flex: 1;
+      text-align: center;
+      padding: 24px 16px;
+      background: var(--gray-50);
+      border-radius: 16px;
+      position: relative;
+    }
+
+    .flow-step::after {
+      content: '→';
+      position: absolute;
+      left: -16px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.2rem;
+      color: var(--gray-400);
+    }
+
+    .flow-step:last-child::after {
+      display: none;
+    }
+
+    .flow-step-icon {
+      font-size: 2rem;
+      margin-bottom: 12px;
+    }
+
+    .flow-step-title {
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+
+    .flow-step-desc {
+      font-size: 0.8rem;
+      color: var(--gray-500);
+    }
+
+    .demo-btns {
+      display: flex;
+      gap: 16px;
+    }
+
+    .demo-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 28px;
+      border-radius: 14px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .demo-btn.primary {
+      background: linear-gradient(135deg, var(--primary-500), var(--primary-700));
+      color: white;
+      border: none;
+    }
+
+    .demo-btn.primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(28, 100, 242, 0.4);
+    }
+
+    .demo-btn.secondary {
+      background: white;
+      color: var(--primary-600);
+      border: 2px solid var(--primary-200);
+    }
+
+    .demo-btn.secondary:hover {
+      background: var(--primary-50);
+      border-color: var(--primary-300);
+    }
+  </style>
+</head>
+<body>
+  <h1>📷 תהליך סריקה ושיבוץ</h1>
+  <p>
+    התהליך המרכזי של האפליקציה - קישור מתפלל עם המצוות שרכש באמצעות סריקת QR.
+    כאן תוכל לראות דמו של התהליך מההתחלה ועד הסוף.
+  </p>
+
+  <div class="demo-container">
+    <div class="demo-section">
+      <h2 class="demo-title">📋 זרימת התהליך</h2>
+      <p class="demo-desc">
+        במוצאי השבת, הגבאי סורק את מעטפת המתפלל ואז את כרטיסי המצוות שבתוכה.
+        המערכת מקשרת אוטומטית את המצוות למתפלל ושולחת הודעת תשלום.
+      </p>
+
+      <div class="flow-steps">
+        <div class="flow-step">
+          <div class="flow-step-icon">👤</div>
+          <div class="flow-step-title">סריקת מעטפה</div>
+          <div class="flow-step-desc">זיהוי המתפלל</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-icon">📜</div>
+          <div class="flow-step-title">סריקת כרטיסים</div>
+          <div class="flow-step-desc">הוספת מצוות לסל</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-icon">💰</div>
+          <div class="flow-step-title">עדכון מחירים</div>
+          <div class="flow-step-desc">קריאת מחיר מהכרטיס</div>
+        </div>
+        <div class="flow-step">
+          <div class="flow-step-icon">💾</div>
+          <div class="flow-step-title">שמירה ושליחה</div>
+          <div class="flow-step-desc">הודעת תשלום</div>
+        </div>
+      </div>
+
+      <div class="demo-btns">
+        <a href="desktop-flow.html" class="demo-btn primary">
+          <span>🖥️</span>
+          דמו למחשב
+        </a>
+        <a href="android-flow.html" class="demo-btn secondary">
+          <span>📱</span>
+          דמו לאנדרואיד
+        </a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KalGabay - Android V1 - Bottom Navigation</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+    }
+
+    :root {
+      --primary-light: #81D4FA;
+      --primary: #4FC3F7;
+      --primary-dark: #0288D1;
+      --primary-darker: #01579B;
+      --accent: #00B0FF;
+      --bg-light: #E1F5FE;
+      --bg-white: #FFFFFF;
+      --text-dark: #1A237E;
+      --text-muted: #546E7A;
+      --shadow: 0 2px 8px rgba(1, 87, 155, 0.15);
+    }
+
+    body {
+      background: var(--bg-light);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: white;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--shadow);
+    }
+
+    .header-title {
+      font-size: 1.4rem;
+      font-weight: bold;
+    }
+
+    .header-subtitle {
+      font-size: 0.85rem;
+      opacity: 0.9;
+    }
+
+    .header-icon {
+      width: 40px;
+      height: 40px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      padding: 16px;
+      padding-bottom: 80px;
+      overflow-y: auto;
+    }
+
+    /* Week Card */
+    .week-card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .week-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .parasha-name {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--primary-darker);
+    }
+
+    .week-date {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .week-nav {
+      display: flex;
+      gap: 8px;
+    }
+
+    .week-nav button {
+      width: 36px;
+      height: 36px;
+      border: none;
+      border-radius: 50%;
+      background: var(--bg-light);
+      color: var(--primary-dark);
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      color: white;
+    }
+
+    .stat-number {
+      font-size: 2rem;
+      font-weight: bold;
+    }
+
+    .stat-label {
+      font-size: 0.85rem;
+      opacity: 0.9;
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+      background: white;
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: var(--text-dark);
+      margin-bottom: 12px;
+    }
+
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .action-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 16px;
+      border: 2px solid var(--primary-light);
+      border-radius: 12px;
+      background: var(--bg-light);
+      color: var(--primary-dark);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .action-btn:active {
+      transform: scale(0.95);
+      background: var(--primary-light);
+    }
+
+    .action-icon {
+      font-size: 1.8rem;
+    }
+
+    .action-label {
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      display: flex;
+      justify-content: space-around;
+      padding: 8px 0;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      border-top-left-radius: 20px;
+      border-top-right-radius: 20px;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 16px;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .nav-item.active {
+      color: var(--primary-dark);
+    }
+
+    .nav-item.active .nav-icon {
+      background: var(--primary-light);
+      color: var(--primary-dark);
+    }
+
+    .nav-icon {
+      font-size: 1.5rem;
+      width: 48px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 16px;
+      transition: background 0.2s;
+    }
+
+    .nav-label {
+      font-size: 0.75rem;
+    }
+
+    /* Floating Action Button */
+    .fab {
+      position: fixed;
+      bottom: 80px;
+      left: 20px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--primary-dark) 100%);
+      color: white;
+      border: none;
+      font-size: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0, 176, 255, 0.4);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div>
+      <div class="header-title">קלגבאי</div>
+      <div class="header-subtitle">בית הכנסת המרכזי</div>
+    </div>
+    <div class="header-icon">👤</div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Week Card -->
+    <div class="week-card">
+      <div class="week-header">
+        <div>
+          <div class="parasha-name">פרשת נשא</div>
+          <div class="week-date">י"ב סיון תשפ"ו</div>
+        </div>
+        <div class="week-nav">
+          <button>→</button>
+          <button>←</button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number">12</div>
+          <div class="stat-label">מצוות משובצות</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">5</div>
+          <div class="stat-label">מצוות פנויות</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">45</div>
+          <div class="stat-label">חברים פעילים</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number">3</div>
+          <div class="stat-label">תזכורות לשליחה</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <div class="section-title">פעולות מהירות</div>
+      <div class="action-grid">
+        <button class="action-btn">
+          <span class="action-icon">📷</span>
+          <span class="action-label">סרוק QR</span>
+        </button>
+        <button class="action-btn">
+          <span class="action-icon">➕</span>
+          <span class="action-label">הוסף חבר</span>
+        </button>
+        <button class="action-btn">
+          <span class="action-icon">📧</span>
+          <span class="action-label">שלח תזכורות</span>
+        </button>
+        <button class="action-btn">
+          <span class="action-icon">🖨️</span>
+          <span class="action-label">הדפסה</span>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- FAB -->
+  <button class="fab">📅</button>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <div class="nav-item active">
+      <div class="nav-icon">🏠</div>
+      <div class="nav-label">ראשי</div>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon">👥</div>
+      <div class="nav-label">חברים</div>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon">📜</div>
+      <div class="nav-label">מצוות</div>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon">🔗</div>
+      <div class="nav-label">שיבוץ</div>
+    </div>
+  </nav>
+</body>
+</html>

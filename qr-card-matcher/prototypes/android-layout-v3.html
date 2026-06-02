@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KalGabay - Android V3 - Card Based</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+    }
+
+    :root {
+      --blue-50: #E3F2FD;
+      --blue-100: #BBDEFB;
+      --blue-200: #90CAF9;
+      --blue-300: #64B5F6;
+      --blue-400: #42A5F5;
+      --blue-500: #2196F3;
+      --blue-600: #1E88E5;
+      --blue-700: #1976D2;
+      --blue-800: #1565C0;
+      --blue-900: #0D47A1;
+      --white: #FFFFFF;
+      --gray-100: #F5F5F5;
+      --text-dark: #1A237E;
+    }
+
+    body {
+      background: linear-gradient(180deg, var(--blue-700) 0%, var(--blue-800) 30%, var(--blue-50) 30%);
+      min-height: 100vh;
+    }
+
+    /* Header */
+    .header {
+      color: white;
+      padding: 20px;
+      padding-bottom: 60px;
+    }
+
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      border: 2px solid rgba(255,255,255,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .greeting {
+      font-size: 1.1rem;
+      opacity: 0.9;
+    }
+
+    .synagogue-name {
+      font-size: 1.6rem;
+      font-weight: bold;
+      margin-top: 4px;
+    }
+
+    /* Main Card */
+    .main-card {
+      background: white;
+      margin: -40px 16px 16px;
+      border-radius: 24px;
+      box-shadow: 0 8px 32px rgba(13, 71, 161, 0.15);
+      overflow: hidden;
+    }
+
+    /* Parasha Section */
+    .parasha-section {
+      padding: 24px;
+      background: linear-gradient(135deg, var(--blue-500) 0%, var(--blue-700) 100%);
+      color: white;
+    }
+
+    .parasha-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .parasha-info {
+      text-align: center;
+      flex: 1;
+    }
+
+    .parasha-label {
+      font-size: 0.85rem;
+      opacity: 0.85;
+      margin-bottom: 4px;
+    }
+
+    .parasha-name {
+      font-size: 1.8rem;
+      font-weight: bold;
+    }
+
+    .parasha-date {
+      font-size: 0.9rem;
+      opacity: 0.9;
+      margin-top: 4px;
+    }
+
+    .arrow-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(255,255,255,0.15);
+      color: white;
+      font-size: 1.3rem;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+    }
+
+    /* Stats Section */
+    .stats-section {
+      padding: 20px 24px;
+      display: flex;
+      justify-content: space-around;
+      border-bottom: 1px solid var(--blue-50);
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--blue-700);
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: #666;
+      margin-top: 2px;
+    }
+
+    /* Action Buttons */
+    .actions-section {
+      padding: 20px;
+    }
+
+    .action-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .action-btn {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 16px;
+      border-radius: 14px;
+      border: none;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+
+    .action-btn:active {
+      transform: scale(0.97);
+    }
+
+    .action-btn.primary {
+      background: linear-gradient(135deg, var(--blue-400) 0%, var(--blue-600) 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+    }
+
+    .action-btn.secondary {
+      background: var(--blue-50);
+      color: var(--blue-700);
+    }
+
+    .action-icon {
+      font-size: 1.3rem;
+    }
+
+    /* Reminders Card */
+    .reminders-card {
+      background: white;
+      margin: 0 16px 16px;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-weight: 600;
+      color: var(--text-dark);
+      font-size: 1.1rem;
+    }
+
+    .card-badge {
+      background: var(--blue-100);
+      color: var(--blue-700);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.85rem;
+    }
+
+    .reminder-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--blue-50);
+      border-radius: 12px;
+      margin-bottom: 8px;
+    }
+
+    .reminder-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .reminder-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: var(--blue-200);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .reminder-text {
+      flex: 1;
+    }
+
+    .reminder-name {
+      font-weight: 500;
+      color: var(--text-dark);
+    }
+
+    .reminder-desc {
+      font-size: 0.85rem;
+      color: #666;
+    }
+
+    .reminder-action {
+      background: var(--blue-500);
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    /* Bottom Nav */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      display: flex;
+      justify-content: space-around;
+      padding: 12px 0 8px;
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      color: #999;
+      cursor: pointer;
+    }
+
+    .nav-item.active {
+      color: var(--blue-600);
+    }
+
+    .nav-icon {
+      font-size: 1.4rem;
+    }
+
+    .nav-text {
+      font-size: 0.7rem;
+    }
+
+    .nav-item.scan {
+      margin-top: -30px;
+    }
+
+    .scan-btn {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--blue-400) 0%, var(--blue-600) 100%);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      box-shadow: 0 4px 16px rgba(33, 150, 243, 0.4);
+    }
+
+    .content-area {
+      padding-bottom: 100px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-row">
+      <div class="logo">קלגבאי</div>
+      <div class="user-avatar">👤</div>
+    </div>
+    <div class="greeting">שלום,</div>
+    <div class="synagogue-name">בית הכנסת המרכזי</div>
+  </header>
+
+  <div class="content-area">
+    <!-- Main Card -->
+    <div class="main-card">
+      <!-- Parasha -->
+      <div class="parasha-section">
+        <div class="parasha-nav">
+          <button class="arrow-btn">→</button>
+          <div class="parasha-info">
+            <div class="parasha-label">השבת הקרובה</div>
+            <div class="parasha-name">פרשת נשא</div>
+            <div class="parasha-date">י"ב סיון תשפ"ו</div>
+          </div>
+          <button class="arrow-btn">←</button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-section">
+        <div class="stat-item">
+          <div class="stat-value">12</div>
+          <div class="stat-label">משובצים</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">5</div>
+          <div class="stat-label">פנויים</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value">45</div>
+          <div class="stat-label">חברים</div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="actions-section">
+        <div class="action-row">
+          <button class="action-btn primary">
+            <span class="action-icon">➕</span>
+            <span>שיבוץ חדש</span>
+          </button>
+        </div>
+        <div class="action-row">
+          <button class="action-btn secondary">
+            <span class="action-icon">👥</span>
+            <span>חברים</span>
+          </button>
+          <button class="action-btn secondary">
+            <span class="action-icon">📜</span>
+            <span>מצוות</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reminders -->
+    <div class="reminders-card">
+      <div class="card-header">
+        <span class="card-title">תזכורות לשליחה</span>
+        <span class="card-badge">3</span>
+      </div>
+      <div class="reminder-item">
+        <div class="reminder-icon">📧</div>
+        <div class="reminder-text">
+          <div class="reminder-name">יוסי כהן</div>
+          <div class="reminder-desc">עליה לתורה - שלישי</div>
+        </div>
+        <button class="reminder-action">שלח</button>
+      </div>
+      <div class="reminder-item">
+        <div class="reminder-icon">📧</div>
+        <div class="reminder-text">
+          <div class="reminder-name">שמעון לוי</div>
+          <div class="reminder-desc">פתיחת ההיכל</div>
+        </div>
+        <button class="reminder-action">שלח</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <div class="nav-item active">
+      <div class="nav-icon">🏠</div>
+      <div class="nav-text">ראשי</div>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon">👥</div>
+      <div class="nav-text">חברים</div>
+    </div>
+    <div class="nav-item scan">
+      <div class="scan-btn">📷</div>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon">📜</div>
+      <div class="nav-text">מצוות</div>
+    </div>
+    <div class="nav-item">
+      <div class="nav-icon">📅</div>
+      <div class="nav-text">לוח שנה</div>
+    </div>
+  </nav>
+</body>
+</html>

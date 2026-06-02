@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KalGabay - Printing Flow - Step 3 - Position Selection</title>
+  <link rel="stylesheet" href="../shared-styles.css">
+  <style>
+    body {
+      background: var(--gray-100);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 24px;
+      width: 100%;
+      max-width: 900px;
+      max-height: 90vh;
+      box-shadow: var(--shadow-xl);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-header {
+      padding: 24px 28px;
+      border-bottom: 1px solid var(--gray-100);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .modal-header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .modal-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--primary-100);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+
+    .modal-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .modal-subtitle {
+      font-size: 0.85rem;
+      color: var(--gray-500);
+      margin-top: 2px;
+    }
+
+    .modal-close {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: none;
+      background: var(--gray-100);
+      color: var(--gray-600);
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+
+    /* Stepper */
+    .stepper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 28px;
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-100);
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .stepper-step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stepper-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--gray-200);
+      color: var(--gray-500);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .stepper-step.active .stepper-circle {
+      background: var(--primary-500);
+      color: white;
+    }
+
+    .stepper-step.completed .stepper-circle {
+      background: var(--success-500);
+      color: white;
+    }
+
+    .stepper-label {
+      font-size: 0.85rem;
+      color: var(--gray-500);
+    }
+
+    .stepper-step.active .stepper-label {
+      color: var(--primary-600);
+      font-weight: 500;
+    }
+
+    .stepper-step.completed .stepper-label {
+      color: var(--success-600);
+    }
+
+    .stepper-line {
+      width: 40px;
+      height: 2px;
+      background: var(--gray-200);
+    }
+
+    .stepper-line.completed {
+      background: var(--success-500);
+    }
+
+    .modal-body {
+      padding: 28px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    /* Layout */
+    .content-layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 28px;
+    }
+
+    /* A4 Page Preview */
+    .page-preview-container {
+      background: var(--gray-100);
+      border-radius: 18px;
+      padding: 24px;
+    }
+
+    .page-preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .page-preview-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .page-preview-legend {
+      display: flex;
+      gap: 16px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.8rem;
+      color: var(--gray-600);
+    }
+
+    .legend-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 4px;
+    }
+
+    .legend-dot.available { background: var(--gray-200); }
+    .legend-dot.used { background: var(--gray-400); }
+    .legend-dot.selected { background: var(--primary-500); }
+    .legend-dot.current { background: var(--success-500); }
+
+    /* A4 Page Grid */
+    .a4-page {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      padding: 20px;
+      aspect-ratio: 210 / 297; /* A4 ratio */
+    }
+
+    .label-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(8, 1fr);
+      gap: 8px;
+      height: 100%;
+    }
+
+    .label-cell {
+      background: var(--gray-100);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      font-size: 0.75rem;
+      color: var(--gray-400);
+      border: 2px solid transparent;
+      position: relative;
+    }
+
+    .label-cell:hover {
+      background: var(--primary-100);
+      border-color: var(--primary-300);
+    }
+
+    .label-cell.used {
+      background: var(--gray-300);
+      cursor: not-allowed;
+      color: var(--gray-500);
+    }
+
+    .label-cell.used::after {
+      content: '✓';
+      position: absolute;
+      font-size: 0.9rem;
+    }
+
+    .label-cell.selected {
+      background: var(--primary-100);
+      border-color: var(--primary-500);
+      color: var(--primary-700);
+      font-weight: 600;
+    }
+
+    .label-cell.current {
+      background: var(--success-100);
+      border-color: var(--success-500);
+      color: var(--success-700);
+      font-weight: 600;
+    }
+
+    .label-cell.current::before {
+      content: '▶';
+      position: absolute;
+      font-size: 0.6rem;
+      top: 2px;
+      right: 4px;
+    }
+
+    /* Right Panel */
+    .right-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Memory Feature Card */
+    .memory-card {
+      background: linear-gradient(135deg, #059669, #10B981);
+      border-radius: 18px;
+      padding: 22px;
+      color: white;
+    }
+
+    .memory-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .memory-card-icon {
+      width: 44px;
+      height: 44px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.3rem;
+    }
+
+    .memory-card-title {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .memory-card-subtitle {
+      font-size: 0.85rem;
+      opacity: 0.85;
+      margin-top: 2px;
+    }
+
+    .memory-info {
+      background: rgba(255,255,255,0.15);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+
+    .memory-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .memory-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .memory-label {
+      font-size: 0.85rem;
+      opacity: 0.85;
+    }
+
+    .memory-value {
+      font-weight: 600;
+    }
+
+    .memory-btn {
+      width: 100%;
+      padding: 14px;
+      background: white;
+      color: #059669;
+      border: none;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    /* Selection Summary */
+    .summary-card {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 18px;
+      padding: 22px;
+    }
+
+    .summary-title {
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 16px;
+    }
+
+    .summary-items {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .summary-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      background: var(--gray-50);
+      border-radius: 10px;
+    }
+
+    .summary-item-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--primary-100);
+      color: var(--primary-600);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.75rem;
+    }
+
+    .summary-item-name {
+      flex: 1;
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .summary-item-position {
+      font-size: 0.8rem;
+      color: var(--gray-500);
+      background: white;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+
+    /* Options */
+    .options-card {
+      background: var(--gray-50);
+      border-radius: 18px;
+      padding: 22px;
+    }
+
+    .option-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .option-row:last-child {
+      border-bottom: none;
+    }
+
+    .option-label {
+      font-size: 0.9rem;
+      color: var(--gray-700);
+    }
+
+    .option-toggle {
+      width: 48px;
+      height: 28px;
+      background: var(--gray-300);
+      border-radius: 14px;
+      position: relative;
+      cursor: pointer;
+      transition: background var(--transition-fast);
+    }
+
+    .option-toggle.active {
+      background: var(--primary-500);
+    }
+
+    .option-toggle::after {
+      content: '';
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      background: white;
+      border-radius: 50%;
+      top: 3px;
+      right: 3px;
+      transition: right var(--transition-fast);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .option-toggle.active::after {
+      right: 23px;
+    }
+
+    .modal-footer {
+      padding: 20px 28px;
+      border-top: 1px solid var(--gray-100);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--gray-50);
+      flex-shrink: 0;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all var(--transition-fast);
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--primary-500);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-600);
+    }
+
+    .btn-secondary {
+      background: var(--gray-100);
+      color: var(--gray-700);
+    }
+
+    .btn-secondary:hover {
+      background: var(--gray-200);
+    }
+
+    /* Demo navigation */
+    .demo-nav {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--gray-900);
+      padding: 12px 24px;
+      border-radius: 14px;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .demo-nav a {
+      color: white;
+      text-decoration: none;
+      font-size: 0.85rem;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+
+    .demo-nav a:hover {
+      opacity: 1;
+    }
+
+    .demo-nav span {
+      color: var(--gray-500);
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-header-right">
+        <div class="modal-icon">📍</div>
+        <div>
+          <h2 class="modal-title">בחירת מיקום על הדף</h2>
+          <p class="modal-subtitle">לחץ על המיקום הראשון שממנו תתחיל ההדפסה</p>
+        </div>
+      </div>
+      <button class="modal-close">✕</button>
+    </div>
+
+    <!-- Stepper -->
+    <div class="stepper">
+      <div class="stepper-step completed">
+        <div class="stepper-circle">✓</div>
+        <span class="stepper-label">סוג</span>
+      </div>
+      <div class="stepper-line completed"></div>
+      <div class="stepper-step completed">
+        <div class="stepper-circle">✓</div>
+        <span class="stepper-label">בחירה</span>
+      </div>
+      <div class="stepper-line completed"></div>
+      <div class="stepper-step active">
+        <div class="stepper-circle">3</div>
+        <span class="stepper-label">מיקום</span>
+      </div>
+      <div class="stepper-line"></div>
+      <div class="stepper-step">
+        <div class="stepper-circle">4</div>
+        <span class="stepper-label">הדפסה</span>
+      </div>
+    </div>
+
+    <div class="modal-body">
+      <div class="content-layout">
+        <!-- A4 Page Preview -->
+        <div class="page-preview-container">
+          <div class="page-preview-header">
+            <h3 class="page-preview-title">תצוגת דף מדבקות (A4)</h3>
+            <div class="page-preview-legend">
+              <div class="legend-item">
+                <div class="legend-dot available"></div>
+                <span>פנוי</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot used"></div>
+                <span>נוצל</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot current"></div>
+                <span>התחלה</span>
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot selected"></div>
+                <span>נבחר</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="a4-page">
+            <div class="label-grid">
+              <!-- Row 1 -->
+              <div class="label-cell used"></div>
+              <div class="label-cell used"></div>
+              <div class="label-cell used"></div>
+              <div class="label-cell used"></div>
+              <!-- Row 2 -->
+              <div class="label-cell used"></div>
+              <div class="label-cell used"></div>
+              <div class="label-cell used"></div>
+              <div class="label-cell used"></div>
+              <!-- Row 3 -->
+              <div class="label-cell used"></div>
+              <div class="label-cell used"></div>
+              <div class="label-cell used"></div>
+              <div class="label-cell current">12</div>
+              <!-- Row 4 -->
+              <div class="label-cell selected">13</div>
+              <div class="label-cell selected">14</div>
+              <div class="label-cell selected">15</div>
+              <div class="label-cell selected">16</div>
+              <!-- Row 5 -->
+              <div class="label-cell selected">17</div>
+              <div class="label-cell">18</div>
+              <div class="label-cell">19</div>
+              <div class="label-cell">20</div>
+              <!-- Row 6 -->
+              <div class="label-cell">21</div>
+              <div class="label-cell">22</div>
+              <div class="label-cell">23</div>
+              <div class="label-cell">24</div>
+              <!-- Row 7 -->
+              <div class="label-cell">25</div>
+              <div class="label-cell">26</div>
+              <div class="label-cell">27</div>
+              <div class="label-cell">28</div>
+              <!-- Row 8 -->
+              <div class="label-cell">29</div>
+              <div class="label-cell">30</div>
+              <div class="label-cell">31</div>
+              <div class="label-cell">32</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="right-panel">
+          <!-- Memory Feature -->
+          <div class="memory-card">
+            <div class="memory-card-header">
+              <div class="memory-card-icon">🧠</div>
+              <div>
+                <div class="memory-card-title">זיכרון מיקומים</div>
+                <div class="memory-card-subtitle">המשך מההדפסה האחרונה</div>
+              </div>
+            </div>
+            <div class="memory-info">
+              <div class="memory-row">
+                <span class="memory-label">הדפסה אחרונה:</span>
+                <span class="memory-value">אתמול 14:32</span>
+              </div>
+              <div class="memory-row">
+                <span class="memory-label">מיקום אחרון:</span>
+                <span class="memory-value">תא 11</span>
+              </div>
+              <div class="memory-row">
+                <span class="memory-label">פנויים בדף:</span>
+                <span class="memory-value">21 מדבקות</span>
+              </div>
+            </div>
+            <button class="memory-btn">
+              <span>📍</span>
+              המשך מתא 12
+            </button>
+          </div>
+
+          <!-- Selection Summary -->
+          <div class="summary-card">
+            <h4 class="summary-title">סדר הדפסה (5 פריטים)</h4>
+            <div class="summary-items">
+              <div class="summary-item">
+                <div class="summary-item-avatar">יכ</div>
+                <span class="summary-item-name">יוסי כהן</span>
+                <span class="summary-item-position">תא 12</span>
+              </div>
+              <div class="summary-item">
+                <div class="summary-item-avatar">של</div>
+                <span class="summary-item-name">שמעון לוי</span>
+                <span class="summary-item-position">תא 13</span>
+              </div>
+              <div class="summary-item">
+                <div class="summary-item-avatar">דב</div>
+                <span class="summary-item-name">דוד ברק</span>
+                <span class="summary-item-position">תא 14</span>
+              </div>
+              <div class="summary-item">
+                <div class="summary-item-avatar">מר</div>
+                <span class="summary-item-name">משה רוזן</span>
+                <span class="summary-item-position">תא 15</span>
+              </div>
+              <div class="summary-item">
+                <div class="summary-item-avatar">יד</div>
+                <span class="summary-item-name">יעקב דהן</span>
+                <span class="summary-item-position">תא 16</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Options -->
+          <div class="options-card">
+            <div class="option-row">
+              <span class="option-label">שמור מיקום לפעם הבאה</span>
+              <div class="option-toggle active"></div>
+            </div>
+            <div class="option-row">
+              <span class="option-label">התחל דף חדש</span>
+              <div class="option-toggle"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <a href="flow-step-2.html" class="btn btn-secondary">
+        <span>→</span>
+        חזרה
+      </a>
+      <a href="flow-step-4.html" class="btn btn-primary">
+        תצוגה מקדימה והדפסה
+        <span>←</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Demo Navigation -->
+  <nav class="demo-nav">
+    <span>שלב 3/4</span>
+    <a href="flow-step-2.html">← הקודם</a>
+    <a href="flow-step-4.html">הבא →</a>
+  </nav>
+</body>
+</html>

@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>KalGabay - Archive Android View</title>
+  <link rel="stylesheet" href="../shared-styles.css">
+  <style>
+    :root {
+      --safe-area-top: 24px;
+      --safe-area-bottom: 20px;
+    }
+
+    body {
+      background: var(--gray-50);
+      min-height: 100vh;
+      max-width: 420px;
+      margin: 0 auto;
+      position: relative;
+      padding-bottom: 100px;
+    }
+
+    /* Status Bar */
+    .status-bar {
+      height: var(--safe-area-top);
+      background: var(--primary-700);
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, var(--primary-600), var(--primary-800));
+      padding: 20px;
+      padding-top: 16px;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .header-back {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: white;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    .header-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: white;
+    }
+
+    .header-action {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: white;
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+
+    /* Week Selector */
+    .week-selector {
+      background: rgba(255,255,255,0.15);
+      border-radius: 14px;
+      padding: 14px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .week-arrow {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    .week-info {
+      text-align: center;
+      color: white;
+    }
+
+    .week-parasha {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .week-date {
+      font-size: 0.8rem;
+      opacity: 0.85;
+      margin-top: 2px;
+    }
+
+    /* Content */
+    .content {
+      padding: 20px;
+    }
+
+    /* Stats Cards */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .stat-value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--primary-600);
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      color: var(--gray-500);
+      margin-top: 2px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--gray-100);
+      padding: 4px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--gray-600);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+    }
+
+    .tab.active {
+      background: white;
+      color: var(--primary-600);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Search */
+    .search-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: white;
+      padding: 12px 16px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .search-bar input {
+      border: none;
+      background: transparent;
+      flex: 1;
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    /* Item Cards */
+    .item-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .item-card {
+      background: white;
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+
+    .item-mitzva {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .item-mitzva-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: var(--primary-100);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+    }
+
+    .item-mitzva-name {
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .item-mitzva-code {
+      font-size: 0.75rem;
+      color: var(--gray-400);
+    }
+
+    .item-price {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--primary-600);
+    }
+
+    .item-member {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--gray-50);
+      border-radius: 12px;
+      margin-bottom: 12px;
+    }
+
+    .item-member-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: var(--primary-100);
+      color: var(--primary-600);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.8rem;
+    }
+
+    .item-member-info {
+      flex: 1;
+    }
+
+    .item-member-name {
+      font-weight: 500;
+      font-size: 0.9rem;
+      color: var(--gray-900);
+    }
+
+    .item-member-phone {
+      font-size: 0.8rem;
+      color: var(--gray-500);
+    }
+
+    .item-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .item-status {
+      padding: 6px 14px;
+      border-radius: 10px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .item-status.paid {
+      background: var(--success-100);
+      color: var(--success-600);
+    }
+
+    .item-status.unpaid {
+      background: var(--warning-100);
+      color: var(--warning-600);
+    }
+
+    .item-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .item-action {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid var(--gray-200);
+      background: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100%;
+      max-width: 420px;
+      background: white;
+      display: flex;
+      justify-content: space-around;
+      padding: 12px 16px calc(12px + var(--safe-area-bottom));
+      box-shadow: 0 -4px 20px rgba(0,0,0,0.08);
+      border-radius: 24px 24px 0 0;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      padding: 6px 12px;
+    }
+
+    .nav-icon {
+      font-size: 1.3rem;
+      color: var(--gray-400);
+    }
+
+    .nav-item.active .nav-icon {
+      color: var(--primary-600);
+    }
+
+    .nav-label {
+      font-size: 0.7rem;
+      color: var(--gray-400);
+      font-weight: 500;
+    }
+
+    .nav-item.active .nav-label {
+      color: var(--primary-600);
+    }
+
+    /* Demo navigation */
+    .demo-nav {
+      position: fixed;
+      top: calc(var(--safe-area-top) + 70px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--gray-900);
+      padding: 10px 20px;
+      border-radius: 12px;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      z-index: 20;
+    }
+
+    .demo-nav a {
+      color: white;
+      text-decoration: none;
+      font-size: 0.8rem;
+      opacity: 0.7;
+    }
+
+    .demo-nav a:hover {
+      opacity: 1;
+    }
+
+    .demo-nav span {
+      color: var(--gray-500);
+      font-size: 0.75rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="status-bar"></div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-top">
+      <button class="header-back">←</button>
+      <span class="header-title">ארכיון</span>
+      <button class="header-action">📥</button>
+    </div>
+    <div class="week-selector">
+      <button class="week-arrow">→</button>
+      <div class="week-info">
+        <div class="week-parasha">פרשת בהעלותך</div>
+        <div class="week-date">שבת ט"ו סיון תשפ"ו</div>
+      </div>
+      <button class="week-arrow">←</button>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <main class="content">
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-value">12</div>
+        <div class="stat-label">נמכרו</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">₪4,250</div>
+        <div class="stat-label">הכנסות</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">8</div>
+        <div class="stat-label">קונים</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-value">₪1,400</div>
+        <div class="stat-label">ממתין</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab active">מצוות</button>
+      <button class="tab">מתפללים</button>
+    </div>
+
+    <!-- Search -->
+    <div class="search-bar">
+      <span>🔍</span>
+      <input type="text" placeholder="חיפוש מצווה או מתפלל..." />
+    </div>
+
+    <!-- Item List -->
+    <div class="item-list">
+      <div class="item-card">
+        <div class="item-header">
+          <div class="item-mitzva">
+            <div class="item-mitzva-icon">📖</div>
+            <div>
+              <div class="item-mitzva-name">עליה לתורה - שלישי</div>
+              <div class="item-mitzva-code">MTZ-003</div>
+            </div>
+          </div>
+          <div class="item-price">₪180</div>
+        </div>
+        <div class="item-member">
+          <div class="item-member-avatar">יכ</div>
+          <div class="item-member-info">
+            <div class="item-member-name">יוסי כהן</div>
+            <div class="item-member-phone">050-123-4567</div>
+          </div>
+        </div>
+        <div class="item-footer">
+          <span class="item-status paid">שולם</span>
+          <div class="item-actions">
+            <button class="item-action">✏️</button>
+            <button class="item-action">📧</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="item-card">
+        <div class="item-header">
+          <div class="item-mitzva">
+            <div class="item-mitzva-icon">🚪</div>
+            <div>
+              <div class="item-mitzva-name">פתיחת ההיכל</div>
+              <div class="item-mitzva-code">MTZ-001</div>
+            </div>
+          </div>
+          <div class="item-price">₪350</div>
+        </div>
+        <div class="item-member">
+          <div class="item-member-avatar">של</div>
+          <div class="item-member-info">
+            <div class="item-member-name">שמעון לוי</div>
+            <div class="item-member-phone">052-987-6543</div>
+          </div>
+        </div>
+        <div class="item-footer">
+          <span class="item-status unpaid">ממתין לתשלום</span>
+          <div class="item-actions">
+            <button class="item-action">✏️</button>
+            <button class="item-action">📧</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="item-card">
+        <div class="item-header">
+          <div class="item-mitzva">
+            <div class="item-mitzva-icon">📜</div>
+            <div>
+              <div class="item-mitzva-name">הפטרה</div>
+              <div class="item-mitzva-code">MTZ-012</div>
+            </div>
+          </div>
+          <div class="item-price">₪200</div>
+        </div>
+        <div class="item-member">
+          <div class="item-member-avatar">דב</div>
+          <div class="item-member-info">
+            <div class="item-member-name">דוד ברק</div>
+            <div class="item-member-phone">054-555-5555</div>
+          </div>
+        </div>
+        <div class="item-footer">
+          <span class="item-status paid">שולם</span>
+          <div class="item-actions">
+            <button class="item-action">✏️</button>
+            <button class="item-action">📧</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <div class="nav-item">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">ראשי</span>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">👥</span>
+      <span class="nav-label">מתפללים</span>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">📜</span>
+      <span class="nav-label">מצוות</span>
+    </div>
+    <div class="nav-item active">
+      <span class="nav-icon">📊</span>
+      <span class="nav-label">ארכיון</span>
+    </div>
+  </nav>
+
+  <!-- Demo Navigation -->
+  <nav class="demo-nav">
+    <span>אנדרואיד</span>
+    <a href="index.html">← חזרה</a>
+    <a href="desktop.html">מחשב</a>
+  </nav>
+</body>
+</html>

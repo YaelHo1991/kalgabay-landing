@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KalGabay - Desktop Option C - Top Tabs</title>
+  <link rel="stylesheet" href="../shared-styles.css">
+  <style>
+    body {
+      background: var(--gray-100);
+      min-height: 100vh;
+    }
+
+    /* Compact Header */
+    .header {
+      background: linear-gradient(135deg, var(--primary-700) 0%, var(--primary-900) 100%);
+      padding: 0;
+    }
+
+    .header-top {
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: white;
+    }
+
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+
+    .logo-text {
+      font-size: 1.4rem;
+      font-weight: 700;
+    }
+
+    .week-quick {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: rgba(255,255,255,0.1);
+      padding: 10px 18px;
+      border-radius: 10px;
+      color: white;
+    }
+
+    .week-quick-parasha {
+      font-weight: 600;
+    }
+
+    .week-quick-date {
+      font-size: 0.85rem;
+      opacity: 0.8;
+    }
+
+    .week-quick-arrows {
+      display: flex;
+      gap: 4px;
+    }
+
+    .week-quick-arrow {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      background: rgba(255,255,255,0.15);
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    .week-quick-arrow:hover {
+      background: rgba(255,255,255,0.25);
+    }
+
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .header-search {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255,255,255,0.15);
+      padding: 10px 18px;
+      border-radius: 10px;
+      color: rgba(255,255,255,0.7);
+      width: 260px;
+    }
+
+    .header-search input {
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 0.9rem;
+      width: 100%;
+      outline: none;
+    }
+
+    .header-search input::placeholder {
+      color: rgba(255,255,255,0.6);
+    }
+
+    .header-user {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: white;
+      cursor: pointer;
+      padding: 8px 12px;
+      border-radius: 10px;
+      transition: background var(--transition-fast);
+    }
+
+    .header-user:hover {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .header-user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    .header-user-name {
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    /* Navigation Tabs */
+    .nav-tabs-container {
+      padding: 0 32px;
+      background: rgba(0,0,0,0.1);
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 0;
+    }
+
+    .nav-tab {
+      padding: 16px 28px;
+      color: rgba(255,255,255,0.7);
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      border-bottom: 3px solid transparent;
+      transition: all var(--transition-fast);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-tab:hover {
+      color: white;
+      background: rgba(255,255,255,0.05);
+    }
+
+    .nav-tab.active {
+      color: white;
+      border-bottom-color: white;
+      background: rgba(255,255,255,0.1);
+    }
+
+    .nav-tab-badge {
+      background: rgba(255,255,255,0.2);
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.75rem;
+    }
+
+    .nav-tab.active .nav-tab-badge {
+      background: white;
+      color: var(--primary-700);
+    }
+
+    /* Main Content */
+    .main-content {
+      padding: 28px 32px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    /* Stats Strip */
+    .stats-strip {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stats-strip-card {
+      flex: 1;
+      background: white;
+      border-radius: 14px;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .stats-strip-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+
+    .stats-strip-card:nth-child(1) .stats-strip-icon { background: var(--primary-100); }
+    .stats-strip-card:nth-child(2) .stats-strip-icon { background: var(--success-100); }
+    .stats-strip-card:nth-child(3) .stats-strip-icon { background: var(--warning-100); }
+    .stats-strip-card:nth-child(4) .stats-strip-icon { background: #EDE9FE; }
+
+    .stats-strip-info {
+      flex: 1;
+    }
+
+    .stats-strip-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      line-height: 1;
+    }
+
+    .stats-strip-label {
+      font-size: 0.85rem;
+      color: var(--gray-500);
+      margin-top: 4px;
+    }
+
+    .stats-strip-action {
+      padding: 10px 16px;
+      border-radius: 10px;
+      background: var(--gray-100);
+      color: var(--gray-600);
+      font-size: 0.85rem;
+      font-weight: 500;
+      border: none;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .stats-strip-action:hover {
+      background: var(--gray-200);
+    }
+
+    /* Quick Actions Bar */
+    .quick-actions-bar {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .quick-action {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 24px;
+      background: white;
+      border-radius: 12px;
+      border: 2px solid var(--gray-200);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .quick-action:hover {
+      border-color: var(--primary-300);
+      background: var(--primary-50);
+    }
+
+    .quick-action-icon {
+      font-size: 1.3rem;
+    }
+
+    .quick-action-text {
+      font-weight: 500;
+      color: var(--gray-700);
+    }
+
+    .quick-action.primary {
+      background: var(--primary-500);
+      border-color: var(--primary-500);
+      color: white;
+    }
+
+    .quick-action.primary:hover {
+      background: var(--primary-600);
+      border-color: var(--primary-600);
+    }
+
+    .quick-action.primary .quick-action-text {
+      color: white;
+    }
+
+    /* Table Section */
+    .table-container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .table-toolbar {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--gray-100);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .table-toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .table-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .table-count {
+      background: var(--gray-100);
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      color: var(--gray-600);
+    }
+
+    .table-toolbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .table-view-toggle {
+      display: flex;
+      background: var(--gray-100);
+      border-radius: 8px;
+      padding: 4px;
+    }
+
+    .table-view-btn {
+      padding: 8px 14px;
+      border: none;
+      background: transparent;
+      color: var(--gray-500);
+      cursor: pointer;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      transition: all var(--transition-fast);
+    }
+
+    .table-view-btn.active {
+      background: white;
+      color: var(--gray-900);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .table-filter-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border: 1px solid var(--gray-200);
+      background: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: var(--gray-600);
+    }
+
+    .table-filter-btn:hover {
+      background: var(--gray-50);
+    }
+
+    /* Data Table */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .data-table thead {
+      background: var(--gray-50);
+    }
+
+    .data-table th {
+      padding: 14px 20px;
+      text-align: right;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .data-table td {
+      padding: 18px 20px;
+      border-bottom: 1px solid var(--gray-100);
+      font-size: 0.95rem;
+    }
+
+    .data-table tr:hover {
+      background: var(--gray-50);
+    }
+
+    .data-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .table-member {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .table-member-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      background: var(--primary-100);
+      color: var(--primary-600);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    .table-member-info {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .table-member-name {
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .table-member-phone {
+      font-size: 0.8rem;
+      color: var(--gray-400);
+    }
+
+    .table-mitzva {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .table-mitzva-icon {
+      font-size: 1.1rem;
+    }
+
+    .table-price {
+      font-weight: 700;
+      color: var(--primary-600);
+    }
+
+    .table-status {
+      display: inline-flex;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .table-status.paid {
+      background: var(--success-100);
+      color: var(--success-600);
+    }
+
+    .table-status.unpaid {
+      background: var(--warning-100);
+      color: var(--warning-600);
+    }
+
+    .table-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .table-action-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      border: 1px solid var(--gray-200);
+      background: white;
+      color: var(--gray-500);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--transition-fast);
+    }
+
+    .table-action-btn:hover {
+      background: var(--gray-50);
+      border-color: var(--gray-300);
+      color: var(--gray-700);
+    }
+
+    .table-action-btn.danger:hover {
+      background: var(--danger-50);
+      border-color: var(--danger-200);
+      color: var(--danger-500);
+    }
+
+    /* Table Pagination */
+    .table-pagination {
+      padding: 16px 24px;
+      border-top: 1px solid var(--gray-100);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--gray-50);
+    }
+
+    .pagination-info {
+      font-size: 0.85rem;
+      color: var(--gray-500);
+    }
+
+    .pagination-controls {
+      display: flex;
+      gap: 4px;
+    }
+
+    .pagination-btn {
+      padding: 8px 14px;
+      border: 1px solid var(--gray-200);
+      background: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: var(--gray-600);
+      transition: all var(--transition-fast);
+    }
+
+    .pagination-btn:hover {
+      background: var(--gray-50);
+    }
+
+    .pagination-btn.active {
+      background: var(--primary-500);
+      border-color: var(--primary-500);
+      color: white;
+    }
+
+    /* Floating Action Button */
+    .fab {
+      position: fixed;
+      bottom: 32px;
+      left: 32px;
+      width: 64px;
+      height: 64px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--primary-500), var(--primary-700));
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-size: 1.8rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 24px rgba(28, 100, 242, 0.4);
+      transition: all var(--transition-normal);
+    }
+
+    .fab:hover {
+      transform: scale(1.05);
+      box-shadow: 0 12px 32px rgba(28, 100, 242, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-top">
+      <div class="header-right">
+        <div class="logo">
+          <div class="logo-icon">🏛️</div>
+          <div class="logo-text">קלגבאי</div>
+        </div>
+        <div class="week-quick">
+          <div class="week-quick-arrows">
+            <button class="week-quick-arrow">→</button>
+          </div>
+          <div>
+            <div class="week-quick-parasha">פרשת בהעלותך</div>
+            <div class="week-quick-date">ט"ו סיון תשפ"ו</div>
+          </div>
+          <div class="week-quick-arrows">
+            <button class="week-quick-arrow">←</button>
+          </div>
+        </div>
+      </div>
+      <div class="header-left">
+        <div class="header-search">
+          <span>🔍</span>
+          <input type="text" placeholder="חיפוש..." />
+        </div>
+        <div class="header-user">
+          <div class="header-user-avatar">יכ</div>
+          <div class="header-user-name">יוסי כהן</div>
+        </div>
+      </div>
+    </div>
+    <div class="nav-tabs-container">
+      <nav class="nav-tabs">
+        <button class="nav-tab active">
+          <span>🏠</span>
+          דף הבית
+        </button>
+        <button class="nav-tab">
+          <span>👥</span>
+          מתפללים
+          <span class="nav-tab-badge">45</span>
+        </button>
+        <button class="nav-tab">
+          <span>📜</span>
+          מצוות
+          <span class="nav-tab-badge">17</span>
+        </button>
+        <button class="nav-tab">
+          <span>🖨️</span>
+          הדפסת מדבקות
+        </button>
+        <button class="nav-tab">
+          <span>📊</span>
+          ארכיון
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Stats Strip -->
+    <div class="stats-strip">
+      <div class="stats-strip-card">
+        <div class="stats-strip-icon">📜</div>
+        <div class="stats-strip-info">
+          <div class="stats-strip-value">5</div>
+          <div class="stats-strip-label">מצוות פנויות</div>
+        </div>
+        <button class="stats-strip-action">הצג</button>
+      </div>
+      <div class="stats-strip-card">
+        <div class="stats-strip-icon">✅</div>
+        <div class="stats-strip-info">
+          <div class="stats-strip-value">12</div>
+          <div class="stats-strip-label">נמכרו השבוע</div>
+        </div>
+        <button class="stats-strip-action">פרטים</button>
+      </div>
+      <div class="stats-strip-card">
+        <div class="stats-strip-icon">💰</div>
+        <div class="stats-strip-info">
+          <div class="stats-strip-value">₪4,250</div>
+          <div class="stats-strip-label">הכנסות השבוע</div>
+        </div>
+        <button class="stats-strip-action">דוח</button>
+      </div>
+      <div class="stats-strip-card">
+        <div class="stats-strip-icon">⏳</div>
+        <div class="stats-strip-info">
+          <div class="stats-strip-value">₪1,400</div>
+          <div class="stats-strip-label">ממתין לתשלום</div>
+        </div>
+        <button class="stats-strip-action">תזכורות</button>
+      </div>
+    </div>
+
+    <!-- Quick Actions Bar -->
+    <div class="quick-actions-bar">
+      <button class="quick-action primary">
+        <span class="quick-action-icon">📷</span>
+        <span class="quick-action-text">התחל סריקה</span>
+      </button>
+      <button class="quick-action">
+        <span class="quick-action-icon">➕</span>
+        <span class="quick-action-text">שיבוץ ידני</span>
+      </button>
+      <button class="quick-action">
+        <span class="quick-action-icon">🖨️</span>
+        <span class="quick-action-text">הדפסת מדבקות</span>
+      </button>
+      <button class="quick-action">
+        <span class="quick-action-icon">📧</span>
+        <span class="quick-action-text">שליחת תזכורות</span>
+      </button>
+    </div>
+
+    <!-- Table Section -->
+    <div class="table-container">
+      <div class="table-toolbar">
+        <div class="table-toolbar-right">
+          <h2 class="table-title">רכישות השבוע</h2>
+          <span class="table-count">12 רשומות</span>
+        </div>
+        <div class="table-toolbar-left">
+          <div class="table-view-toggle">
+            <button class="table-view-btn active">מצוות</button>
+            <button class="table-view-btn">מתפללים</button>
+          </div>
+          <button class="table-filter-btn">
+            <span>🔽</span>
+            סינון
+          </button>
+          <button class="table-filter-btn">
+            <span>📥</span>
+            ייצוא
+          </button>
+        </div>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>מתפלל</th>
+            <th>מצווה</th>
+            <th>מחיר</th>
+            <th>סטטוס</th>
+            <th>תאריך</th>
+            <th>פעולות</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="table-member">
+                <div class="table-member-avatar">יכ</div>
+                <div class="table-member-info">
+                  <div class="table-member-name">יוסי כהן</div>
+                  <div class="table-member-phone">050-1234567</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="table-mitzva">
+                <span class="table-mitzva-icon">📖</span>
+                <span>עליה לתורה - שלישי</span>
+              </div>
+            </td>
+            <td class="table-price">₪180</td>
+            <td><span class="table-status paid">שולם</span></td>
+            <td>היום, 14:32</td>
+            <td>
+              <div class="table-actions">
+                <button class="table-action-btn" title="ערוך">✏️</button>
+                <button class="table-action-btn" title="תזכורת">📧</button>
+                <button class="table-action-btn danger" title="מחק">🗑️</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="table-member">
+                <div class="table-member-avatar">של</div>
+                <div class="table-member-info">
+                  <div class="table-member-name">שמעון לוי</div>
+                  <div class="table-member-phone">052-9876543</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="table-mitzva">
+                <span class="table-mitzva-icon">🚪</span>
+                <span>פתיחת ההיכל</span>
+              </div>
+            </td>
+            <td class="table-price">₪350</td>
+            <td><span class="table-status unpaid">ממתין</span></td>
+            <td>היום, 12:15</td>
+            <td>
+              <div class="table-actions">
+                <button class="table-action-btn" title="ערוך">✏️</button>
+                <button class="table-action-btn" title="תזכורת">📧</button>
+                <button class="table-action-btn danger" title="מחק">🗑️</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="table-member">
+                <div class="table-member-avatar">דב</div>
+                <div class="table-member-info">
+                  <div class="table-member-name">דוד ברק</div>
+                  <div class="table-member-phone">054-5555555</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="table-mitzva">
+                <span class="table-mitzva-icon">📜</span>
+                <span>הפטרה</span>
+              </div>
+            </td>
+            <td class="table-price">₪200</td>
+            <td><span class="table-status paid">שולם</span></td>
+            <td>אתמול, 18:45</td>
+            <td>
+              <div class="table-actions">
+                <button class="table-action-btn" title="ערוך">✏️</button>
+                <button class="table-action-btn" title="תזכורת">📧</button>
+                <button class="table-action-btn danger" title="מחק">🗑️</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="table-member">
+                <div class="table-member-avatar">אג</div>
+                <div class="table-member-info">
+                  <div class="table-member-name">אברהם גולן</div>
+                  <div class="table-member-phone">053-1112233</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="table-mitzva">
+                <span class="table-mitzva-icon">⬆️</span>
+                <span>הגבהה</span>
+              </div>
+            </td>
+            <td class="table-price">₪150</td>
+            <td><span class="table-status unpaid">ממתין</span></td>
+            <td>אתמול, 16:20</td>
+            <td>
+              <div class="table-actions">
+                <button class="table-action-btn" title="ערוך">✏️</button>
+                <button class="table-action-btn" title="תזכורת">📧</button>
+                <button class="table-action-btn danger" title="מחק">🗑️</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="table-member">
+                <div class="table-member-avatar">מר</div>
+                <div class="table-member-info">
+                  <div class="table-member-name">משה רוזן</div>
+                  <div class="table-member-phone">050-9998877</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div class="table-mitzva">
+                <span class="table-mitzva-icon">🔄</span>
+                <span>גלילה</span>
+              </div>
+            </td>
+            <td class="table-price">₪120</td>
+            <td><span class="table-status paid">שולם</span></td>
+            <td>27/05, 10:30</td>
+            <td>
+              <div class="table-actions">
+                <button class="table-action-btn" title="ערוך">✏️</button>
+                <button class="table-action-btn" title="תזכורת">📧</button>
+                <button class="table-action-btn danger" title="מחק">🗑️</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="table-pagination">
+        <div class="pagination-info">מציג 1-5 מתוך 12 רשומות</div>
+        <div class="pagination-controls">
+          <button class="pagination-btn">הקודם</button>
+          <button class="pagination-btn active">1</button>
+          <button class="pagination-btn">2</button>
+          <button class="pagination-btn">3</button>
+          <button class="pagination-btn">הבא</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- FAB -->
+  <button class="fab" title="סריקה מהירה">📷</button>
+</body>
+</html>

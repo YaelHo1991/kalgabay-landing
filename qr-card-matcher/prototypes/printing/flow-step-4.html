@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KalGabay - Printing Flow - Step 4 - Preview & Print</title>
+  <link rel="stylesheet" href="../shared-styles.css">
+  <style>
+    body {
+      background: var(--gray-100);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 24px;
+      width: 100%;
+      max-width: 900px;
+      max-height: 90vh;
+      box-shadow: var(--shadow-xl);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-header {
+      padding: 24px 28px;
+      border-bottom: 1px solid var(--gray-100);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .modal-header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .modal-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--success-100);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+
+    .modal-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .modal-subtitle {
+      font-size: 0.85rem;
+      color: var(--gray-500);
+      margin-top: 2px;
+    }
+
+    .modal-close {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: none;
+      background: var(--gray-100);
+      color: var(--gray-600);
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+
+    /* Stepper */
+    .stepper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 28px;
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-100);
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .stepper-step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stepper-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--gray-200);
+      color: var(--gray-500);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .stepper-step.active .stepper-circle {
+      background: var(--primary-500);
+      color: white;
+    }
+
+    .stepper-step.completed .stepper-circle {
+      background: var(--success-500);
+      color: white;
+    }
+
+    .stepper-label {
+      font-size: 0.85rem;
+      color: var(--gray-500);
+    }
+
+    .stepper-step.active .stepper-label {
+      color: var(--primary-600);
+      font-weight: 500;
+    }
+
+    .stepper-step.completed .stepper-label {
+      color: var(--success-600);
+    }
+
+    .stepper-line {
+      width: 40px;
+      height: 2px;
+      background: var(--gray-200);
+    }
+
+    .stepper-line.completed {
+      background: var(--success-500);
+    }
+
+    .modal-body {
+      padding: 28px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    /* Layout */
+    .content-layout {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 28px;
+    }
+
+    /* Preview Container */
+    .preview-container {
+      background: var(--gray-100);
+      border-radius: 18px;
+      padding: 24px;
+    }
+
+    .preview-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .preview-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .preview-zoom {
+      display: flex;
+      gap: 8px;
+    }
+
+    .zoom-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid var(--gray-200);
+      background: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* A4 Preview with Labels */
+    .a4-preview {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+      padding: 16px;
+      aspect-ratio: 210 / 297;
+    }
+
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(8, 1fr);
+      gap: 6px;
+      height: 100%;
+    }
+
+    .preview-cell {
+      background: var(--gray-100);
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.6rem;
+      color: var(--gray-400);
+      padding: 4px;
+    }
+
+    .preview-cell.used {
+      background: var(--gray-200);
+    }
+
+    .preview-cell.filled {
+      background: white;
+      border: 1px solid var(--primary-200);
+      padding: 2px;
+    }
+
+    .qr-placeholder {
+      width: 70%;
+      aspect-ratio: 1;
+      background: linear-gradient(135deg, var(--primary-100), var(--primary-200));
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 2px;
+    }
+
+    .qr-icon {
+      font-size: 0.9rem;
+    }
+
+    .label-name {
+      font-size: 0.5rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+    }
+
+    .label-code {
+      font-size: 0.4rem;
+      color: var(--gray-500);
+    }
+
+    /* Right Panel */
+    .right-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    /* Summary Card */
+    .summary-card {
+      background: linear-gradient(135deg, var(--primary-600), var(--primary-800));
+      border-radius: 18px;
+      padding: 24px;
+      color: white;
+    }
+
+    .summary-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .summary-icon {
+      width: 52px;
+      height: 52px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+    }
+
+    .summary-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+    }
+
+    .summary-subtitle {
+      font-size: 0.85rem;
+      opacity: 0.85;
+      margin-top: 2px;
+    }
+
+    .summary-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .summary-stat {
+      background: rgba(255,255,255,0.15);
+      border-radius: 12px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .summary-stat-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+
+    .summary-stat-label {
+      font-size: 0.75rem;
+      opacity: 0.85;
+      margin-top: 2px;
+    }
+
+    /* Printer Selection */
+    .printer-card {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 18px;
+      padding: 22px;
+    }
+
+    .printer-title {
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .printer-select {
+      width: 100%;
+      padding: 14px 18px;
+      border: 1px solid var(--gray-200);
+      border-radius: 12px;
+      font-size: 0.95rem;
+      background: var(--gray-50);
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: left 12px center;
+      background-size: 18px;
+    }
+
+    .printer-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 10px 14px;
+      background: var(--success-50);
+      border-radius: 10px;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--success-500);
+    }
+
+    .status-text {
+      font-size: 0.85rem;
+      color: var(--success-700);
+    }
+
+    /* Copies */
+    .copies-card {
+      background: var(--gray-50);
+      border-radius: 18px;
+      padding: 22px;
+    }
+
+    .copies-title {
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 16px;
+    }
+
+    .copies-control {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .copies-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid var(--gray-200);
+      background: white;
+      font-size: 1.3rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gray-600);
+    }
+
+    .copies-btn:hover {
+      background: var(--gray-100);
+    }
+
+    .copies-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      min-width: 40px;
+      text-align: center;
+    }
+
+    /* Print Button */
+    .print-btn {
+      width: 100%;
+      padding: 18px;
+      background: linear-gradient(135deg, var(--success-500), #059669);
+      color: white;
+      border: none;
+      border-radius: 14px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);
+      transition: all var(--transition-fast);
+    }
+
+    .print-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(5, 150, 105, 0.5);
+    }
+
+    .modal-footer {
+      padding: 20px 28px;
+      border-top: 1px solid var(--gray-100);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--gray-50);
+      flex-shrink: 0;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all var(--transition-fast);
+      text-decoration: none;
+    }
+
+    .btn-secondary {
+      background: var(--gray-100);
+      color: var(--gray-700);
+    }
+
+    .btn-secondary:hover {
+      background: var(--gray-200);
+    }
+
+    /* Demo navigation */
+    .demo-nav {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--gray-900);
+      padding: 12px 24px;
+      border-radius: 14px;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .demo-nav a {
+      color: white;
+      text-decoration: none;
+      font-size: 0.85rem;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+
+    .demo-nav a:hover {
+      opacity: 1;
+    }
+
+    .demo-nav span {
+      color: var(--gray-500);
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-header-right">
+        <div class="modal-icon">✅</div>
+        <div>
+          <h2 class="modal-title">תצוגה מקדימה והדפסה</h2>
+          <p class="modal-subtitle">בדוק את התצוגה המקדימה ושלח להדפסה</p>
+        </div>
+      </div>
+      <button class="modal-close">✕</button>
+    </div>
+
+    <!-- Stepper -->
+    <div class="stepper">
+      <div class="stepper-step completed">
+        <div class="stepper-circle">✓</div>
+        <span class="stepper-label">סוג</span>
+      </div>
+      <div class="stepper-line completed"></div>
+      <div class="stepper-step completed">
+        <div class="stepper-circle">✓</div>
+        <span class="stepper-label">בחירה</span>
+      </div>
+      <div class="stepper-line completed"></div>
+      <div class="stepper-step completed">
+        <div class="stepper-circle">✓</div>
+        <span class="stepper-label">מיקום</span>
+      </div>
+      <div class="stepper-line completed"></div>
+      <div class="stepper-step active">
+        <div class="stepper-circle">4</div>
+        <span class="stepper-label">הדפסה</span>
+      </div>
+    </div>
+
+    <div class="modal-body">
+      <div class="content-layout">
+        <!-- Preview -->
+        <div class="preview-container">
+          <div class="preview-header">
+            <h3 class="preview-title">תצוגה מקדימה</h3>
+            <div class="preview-zoom">
+              <button class="zoom-btn">➖</button>
+              <button class="zoom-btn">➕</button>
+            </div>
+          </div>
+
+          <div class="a4-preview">
+            <div class="preview-grid">
+              <!-- Row 1 - Used -->
+              <div class="preview-cell used"></div>
+              <div class="preview-cell used"></div>
+              <div class="preview-cell used"></div>
+              <div class="preview-cell used"></div>
+              <!-- Row 2 - Used -->
+              <div class="preview-cell used"></div>
+              <div class="preview-cell used"></div>
+              <div class="preview-cell used"></div>
+              <div class="preview-cell used"></div>
+              <!-- Row 3 - Partial -->
+              <div class="preview-cell used"></div>
+              <div class="preview-cell used"></div>
+              <div class="preview-cell used"></div>
+              <div class="preview-cell filled">
+                <div class="qr-placeholder"><span class="qr-icon">▦</span></div>
+                <div class="label-name">יוסי כהן</div>
+                <div class="label-code">MBR-001</div>
+              </div>
+              <!-- Row 4 - Filled -->
+              <div class="preview-cell filled">
+                <div class="qr-placeholder"><span class="qr-icon">▦</span></div>
+                <div class="label-name">שמעון לוי</div>
+                <div class="label-code">MBR-002</div>
+              </div>
+              <div class="preview-cell filled">
+                <div class="qr-placeholder"><span class="qr-icon">▦</span></div>
+                <div class="label-name">דוד ברק</div>
+                <div class="label-code">MBR-003</div>
+              </div>
+              <div class="preview-cell filled">
+                <div class="qr-placeholder"><span class="qr-icon">▦</span></div>
+                <div class="label-name">משה רוזן</div>
+                <div class="label-code">MBR-005</div>
+              </div>
+              <div class="preview-cell filled">
+                <div class="qr-placeholder"><span class="qr-icon">▦</span></div>
+                <div class="label-name">יעקב דהן</div>
+                <div class="label-code">MBR-007</div>
+              </div>
+              <!-- Row 5-8 - Empty -->
+              <div class="preview-cell"></div>
+              <div class="preview-cell"></div>
+              <div class="preview-cell"></div>
+              <div class="preview-cell"></div>
+              <div class="preview-cell"></div>
+              <div class="preview-cell"></div>
+              <div class="preview-cell"></div>
+              <div class="preview-cell"></div>
+              <div class="preview-cell"></div>
+              <div class="preview-cell"></div>
+              <div class="preview-cell"></div>
+              <div class="preview-cell"></div>
+              <div class="preview-cell"></div>
+              <div class="preview-cell"></div>
+              <div class="preview-cell"></div>
+              <div class="preview-cell"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="right-panel">
+          <!-- Summary -->
+          <div class="summary-card">
+            <div class="summary-header">
+              <div class="summary-icon">📋</div>
+              <div>
+                <div class="summary-title">סיכום הדפסה</div>
+                <div class="summary-subtitle">מדבקות מתפללים</div>
+              </div>
+            </div>
+            <div class="summary-stats">
+              <div class="summary-stat">
+                <div class="summary-stat-value">5</div>
+                <div class="summary-stat-label">מדבקות</div>
+              </div>
+              <div class="summary-stat">
+                <div class="summary-stat-value">1</div>
+                <div class="summary-stat-label">דפים</div>
+              </div>
+              <div class="summary-stat">
+                <div class="summary-stat-value">12-16</div>
+                <div class="summary-stat-label">מיקומים</div>
+              </div>
+              <div class="summary-stat">
+                <div class="summary-stat-value">16</div>
+                <div class="summary-stat-label">נותרו בדף</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Printer Selection -->
+          <div class="printer-card">
+            <h4 class="printer-title">
+              <span>🖨️</span>
+              בחר מדפסת
+            </h4>
+            <select class="printer-select">
+              <option>HP LaserJet Pro M404dn</option>
+              <option>Brother HL-L2350DW</option>
+              <option>Microsoft Print to PDF</option>
+            </select>
+            <div class="printer-status">
+              <div class="status-dot"></div>
+              <span class="status-text">מדפסת מוכנה</span>
+            </div>
+          </div>
+
+          <!-- Copies -->
+          <div class="copies-card">
+            <h4 class="copies-title">מספר עותקים</h4>
+            <div class="copies-control">
+              <button class="copies-btn">−</button>
+              <span class="copies-value">1</span>
+              <button class="copies-btn">+</button>
+            </div>
+          </div>
+
+          <!-- Print Button -->
+          <a href="flow-complete.html" class="print-btn">
+            <span>🖨️</span>
+            הדפס עכשיו
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <a href="flow-step-3.html" class="btn btn-secondary">
+        <span>→</span>
+        חזרה לבחירת מיקום
+      </a>
+    </div>
+  </div>
+
+  <!-- Demo Navigation -->
+  <nav class="demo-nav">
+    <span>שלב 4/4</span>
+    <a href="flow-step-3.html">← הקודם</a>
+    <a href="flow-complete.html">סיום →</a>
+  </nav>
+</body>
+</html>

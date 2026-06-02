@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KalGabay - Management Prototypes Index</title>
+  <link rel="stylesheet" href="../shared-styles.css">
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 40px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 16px;
+      color: var(--primary-700);
+    }
+
+    p {
+      color: var(--gray-600);
+      margin-bottom: 40px;
+      text-align: center;
+    }
+
+    .prototypes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    .prototype-card {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .prototype-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+    }
+
+    .prototype-card a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .prototype-preview {
+      height: 200px;
+      background: var(--gray-100);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 3rem;
+    }
+
+    .prototype-info {
+      padding: 20px;
+    }
+
+    .prototype-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .prototype-desc {
+      font-size: 0.9rem;
+      color: var(--gray-600);
+    }
+
+    .device-badges {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .device-badge {
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: var(--primary-100);
+      color: var(--primary-700);
+    }
+  </style>
+</head>
+<body>
+  <h1>פרוטוטייפים - ניהול מתפללים ומצוות</h1>
+  <p>מסכי ניהול המאגר - הוספה, עריכה, מחיקה וצפייה</p>
+
+  <div class="prototypes-grid">
+    <div class="prototype-card">
+      <a href="members-desktop.html">
+        <div class="prototype-preview" style="background: linear-gradient(135deg, #1C64F2, #3F83F8);">
+          <span style="color: white;">👥</span>
+        </div>
+        <div class="prototype-info">
+          <div class="prototype-title">ניהול מתפללים - מחשב</div>
+          <div class="prototype-desc">רשימת מתפללים, הוספה, עריכה ומחיקה עם חיפוש וסינון</div>
+          <div class="device-badges">
+            <span class="device-badge">מחשב</span>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="prototype-card">
+      <a href="members-android.html">
+        <div class="prototype-preview" style="background: linear-gradient(135deg, #059669, #10B981);">
+          <span style="color: white;">👥</span>
+        </div>
+        <div class="prototype-info">
+          <div class="prototype-title">ניהול מתפללים - אנדרואיד</div>
+          <div class="prototype-desc">ממשק מובייל לניהול מתפללים עם swipe actions</div>
+          <div class="device-badges">
+            <span class="device-badge" style="background: #FEF3C7; color: #D97706;">אנדרואיד</span>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="prototype-card">
+      <a href="mitzvot-desktop.html">
+        <div class="prototype-preview" style="background: linear-gradient(135deg, #7C3AED, #A78BFA);">
+          <span style="color: white;">📜</span>
+        </div>
+        <div class="prototype-info">
+          <div class="prototype-title">ניהול מצוות - מחשב</div>
+          <div class="prototype-desc">רשימת מצוות, הוספה, עריכה והגדרות מיוחדות לחגים</div>
+          <div class="device-badges">
+            <span class="device-badge">מחשב</span>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="prototype-card">
+      <a href="mitzvot-android.html">
+        <div class="prototype-preview" style="background: linear-gradient(135deg, #F59E0B, #FBBF24);">
+          <span style="color: white;">📜</span>
+        </div>
+        <div class="prototype-info">
+          <div class="prototype-title">ניהול מצוות - אנדרואיד</div>
+          <div class="prototype-desc">ממשק מובייל לניהול מצוות</div>
+          <div class="device-badges">
+            <span class="device-badge" style="background: #FEF3C7; color: #D97706;">אנדרואיד</span>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+</body>
+</html>

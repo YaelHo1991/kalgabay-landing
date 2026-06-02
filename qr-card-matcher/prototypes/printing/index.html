@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KalGabay - Label Printing Flow Demo</title>
+  <link rel="stylesheet" href="../shared-styles.css">
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 40px;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 16px;
+      color: var(--primary-700);
+    }
+
+    p {
+      color: var(--gray-600);
+      margin-bottom: 40px;
+      text-align: center;
+      max-width: 600px;
+    }
+
+    .demo-container {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      width: 100%;
+      max-width: 900px;
+    }
+
+    .demo-section {
+      background: white;
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .demo-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--primary-700);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .demo-desc {
+      color: var(--gray-600);
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .steps-list {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .step-item {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .step-number {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--primary-100);
+      color: var(--primary-600);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+
+    .step-content {
+      flex: 1;
+    }
+
+    .step-title {
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 4px;
+    }
+
+    .step-desc {
+      font-size: 0.9rem;
+      color: var(--gray-500);
+    }
+
+    .demo-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 16px 28px;
+      background: linear-gradient(135deg, var(--primary-500), var(--primary-700));
+      color: white;
+      border: none;
+      border-radius: 14px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      margin-top: 24px;
+      transition: all 0.2s;
+    }
+
+    .demo-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(28, 100, 242, 0.4);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      margin-top: 24px;
+    }
+
+    .feature-card {
+      background: var(--gray-50);
+      border-radius: 14px;
+      padding: 20px;
+    }
+
+    .feature-icon {
+      font-size: 1.5rem;
+      margin-bottom: 12px;
+    }
+
+    .feature-title {
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 6px;
+    }
+
+    .feature-desc {
+      font-size: 0.85rem;
+      color: var(--gray-500);
+    }
+  </style>
+</head>
+<body>
+  <h1>🖨️ תהליך הדפסת מדבקות</h1>
+  <p>
+    הדפסת מדבקות QR על דפי מדבקות מיוחדים (32 מדבקות בדף A4).
+    התהליך כולל בחירת פריטים, מיקום על הדף, ותכונת זיכרון חכמה.
+  </p>
+
+  <div class="demo-container">
+    <div class="demo-section">
+      <h2 class="demo-title">📋 תיאור התהליך</h2>
+      <p class="demo-desc">
+        התהליך החדש מאפשר הדפסה נוחה יותר עם ממשק ויזואלי ברור.
+        ניתן לבחור את המיקום המדויק של כל מדבקה על הדף, והמערכת זוכרת אילו מיקומים כבר נוצלו.
+      </p>
+
+      <div class="steps-list">
+        <div class="step-item">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <div class="step-title">בחירת סוג הדפסה</div>
+            <div class="step-desc">בחירה בין הדפסת מדבקות מתפללים או מדבקות מצוות</div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <div class="step-title">בחירת פריטים</div>
+            <div class="step-desc">סימון המתפללים או המצוות שברצונך להדפיס</div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <div class="step-title">בחירת מיקום על הדף</div>
+            <div class="step-desc">לחיצה על המיקום הרצוי בתצוגה הוויזואלית של דף A4</div>
+          </div>
+        </div>
+        <div class="step-item">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <div class="step-title">תצוגה מקדימה והדפסה</div>
+            <div class="step-desc">אישור התצוגה המקדימה ושליחה למדפסת</div>
+          </div>
+        </div>
+      </div>
+
+      <a href="flow-step-1.html" class="demo-btn">
+        <span>▶️</span>
+        התחל דמו אינטראקטיבי
+      </a>
+    </div>
+
+    <div class="demo-section">
+      <h2 class="demo-title">✨ תכונות חדשות</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🧠</div>
+          <div class="feature-title">זיכרון מיקומים</div>
+          <div class="feature-desc">המערכת זוכרת אילו מיקומים כבר הודפסו ומציעה להמשיך מהמקום האחרון</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">👁️</div>
+          <div class="feature-title">תצוגת דף ויזואלית</div>
+          <div class="feature-desc">תצוגה ברורה של כל 32 המיקומים על דף A4 עם קידוד צבעים</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🎯</div>
+          <div class="feature-title">בחירת מיקום אחד</div>
+          <div class="feature-desc">ממשק מאוחד להדפסת מתפללים ומצוות יחד</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">⚡</div>
+          <div class="feature-title">הדפסה מהירה</div>
+          <div class="feature-desc">תהליך מזורז עם פחות צעדים ויותר אוטומציה</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

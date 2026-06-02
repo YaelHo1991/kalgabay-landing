@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KalGabay - Printing Flow - Step 1</title>
+  <link rel="stylesheet" href="../shared-styles.css">
+  <style>
+    body {
+      background: var(--gray-100);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 24px;
+      width: 100%;
+      max-width: 600px;
+      box-shadow: var(--shadow-xl);
+      overflow: hidden;
+    }
+
+    .modal-header {
+      padding: 24px 28px;
+      border-bottom: 1px solid var(--gray-100);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .modal-header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .modal-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--primary-100);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+
+    .modal-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .modal-subtitle {
+      font-size: 0.85rem;
+      color: var(--gray-500);
+      margin-top: 2px;
+    }
+
+    .modal-close {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: none;
+      background: var(--gray-100);
+      color: var(--gray-600);
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+
+    /* Stepper */
+    .stepper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 28px;
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-100);
+      gap: 8px;
+    }
+
+    .stepper-step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stepper-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--gray-200);
+      color: var(--gray-500);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .stepper-step.active .stepper-circle {
+      background: var(--primary-500);
+      color: white;
+    }
+
+    .stepper-step.completed .stepper-circle {
+      background: var(--success-500);
+      color: white;
+    }
+
+    .stepper-label {
+      font-size: 0.85rem;
+      color: var(--gray-500);
+    }
+
+    .stepper-step.active .stepper-label {
+      color: var(--primary-600);
+      font-weight: 500;
+    }
+
+    .stepper-line {
+      width: 40px;
+      height: 2px;
+      background: var(--gray-200);
+    }
+
+    .stepper-line.completed {
+      background: var(--success-500);
+    }
+
+    .modal-body {
+      padding: 32px 28px;
+    }
+
+    .section-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 16px;
+    }
+
+    /* Type Selection */
+    .type-options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .type-card {
+      background: var(--gray-50);
+      border: 2px solid transparent;
+      border-radius: 18px;
+      padding: 28px 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .type-card:hover {
+      background: var(--primary-50);
+      border-color: var(--primary-200);
+    }
+
+    .type-card.selected {
+      background: var(--primary-50);
+      border-color: var(--primary-500);
+    }
+
+    .type-card-icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      margin: 0 auto 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+    }
+
+    .type-card:first-child .type-card-icon {
+      background: var(--primary-100);
+    }
+
+    .type-card:last-child .type-card-icon {
+      background: #D1FAE5;
+    }
+
+    .type-card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 6px;
+    }
+
+    .type-card-desc {
+      font-size: 0.85rem;
+      color: var(--gray-500);
+    }
+
+    .type-card-count {
+      margin-top: 12px;
+      display: inline-flex;
+      padding: 6px 14px;
+      background: white;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--gray-600);
+    }
+
+    .type-card.selected .type-card-count {
+      background: var(--primary-100);
+      color: var(--primary-700);
+    }
+
+    .selection-indicator {
+      position: absolute;
+      top: 12px;
+      left: 12px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid var(--gray-300);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: transparent;
+    }
+
+    .type-card.selected .selection-indicator {
+      background: var(--primary-500);
+      border-color: var(--primary-500);
+      color: white;
+    }
+
+    .type-card {
+      position: relative;
+    }
+
+    /* Info Card */
+    .info-card {
+      background: #EBF5FF;
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin-top: 24px;
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+    }
+
+    .info-icon {
+      font-size: 1.3rem;
+    }
+
+    .info-content {
+      flex: 1;
+    }
+
+    .info-title {
+      font-weight: 600;
+      color: var(--primary-700);
+      margin-bottom: 4px;
+    }
+
+    .info-text {
+      font-size: 0.85rem;
+      color: var(--primary-600);
+    }
+
+    .modal-footer {
+      padding: 20px 28px;
+      border-top: 1px solid var(--gray-100);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--gray-50);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all var(--transition-fast);
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--primary-500);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-600);
+    }
+
+    .btn-secondary {
+      background: var(--gray-100);
+      color: var(--gray-700);
+    }
+
+    .btn-secondary:hover {
+      background: var(--gray-200);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Demo navigation */
+    .demo-nav {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--gray-900);
+      padding: 12px 24px;
+      border-radius: 14px;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .demo-nav a {
+      color: white;
+      text-decoration: none;
+      font-size: 0.85rem;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+
+    .demo-nav a:hover {
+      opacity: 1;
+    }
+
+    .demo-nav span {
+      color: var(--gray-500);
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-header-right">
+        <div class="modal-icon">🖨️</div>
+        <div>
+          <h2 class="modal-title">הדפסת מדבקות QR</h2>
+          <p class="modal-subtitle">בחר סוג הדפסה והמשך לשלב הבא</p>
+        </div>
+      </div>
+      <button class="modal-close">✕</button>
+    </div>
+
+    <!-- Stepper -->
+    <div class="stepper">
+      <div class="stepper-step active">
+        <div class="stepper-circle">1</div>
+        <span class="stepper-label">סוג</span>
+      </div>
+      <div class="stepper-line"></div>
+      <div class="stepper-step">
+        <div class="stepper-circle">2</div>
+        <span class="stepper-label">בחירה</span>
+      </div>
+      <div class="stepper-line"></div>
+      <div class="stepper-step">
+        <div class="stepper-circle">3</div>
+        <span class="stepper-label">מיקום</span>
+      </div>
+      <div class="stepper-line"></div>
+      <div class="stepper-step">
+        <div class="stepper-circle">4</div>
+        <span class="stepper-label">הדפסה</span>
+      </div>
+    </div>
+
+    <div class="modal-body">
+      <h3 class="section-title">מה ברצונך להדפיס?</h3>
+
+      <div class="type-options">
+        <div class="type-card selected">
+          <div class="selection-indicator">✓</div>
+          <div class="type-card-icon">👥</div>
+          <div class="type-card-title">מדבקות מתפללים</div>
+          <div class="type-card-desc">QR להדבקה על מעטפות</div>
+          <div class="type-card-count">45 מתפללים</div>
+        </div>
+        <div class="type-card">
+          <div class="selection-indicator">✓</div>
+          <div class="type-card-icon">📜</div>
+          <div class="type-card-title">מדבקות מצוות</div>
+          <div class="type-card-desc">QR להדבקה על כרטיסים</div>
+          <div class="type-card-count">17 מצוות</div>
+        </div>
+      </div>
+
+      <div class="info-card">
+        <span class="info-icon">💡</span>
+        <div class="info-content">
+          <div class="info-title">טיפ</div>
+          <div class="info-text">
+            דפי המדבקות מכילים 32 מדבקות (4 עמודות × 8 שורות).
+            בשלב הבא תוכל לבחור את המיקום המדויק על הדף.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <a href="index.html" class="btn btn-secondary">ביטול</a>
+      <a href="flow-step-2.html" class="btn btn-primary">
+        המשך לבחירת פריטים
+        <span>←</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Demo Navigation -->
+  <nav class="demo-nav">
+    <span>שלב 1/4</span>
+    <a href="index.html">← חזרה</a>
+    <a href="flow-step-2.html">הבא →</a>
+  </nav>
+</body>
+</html>

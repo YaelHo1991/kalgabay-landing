@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KalGabay - Android V2 - Tab Navigation</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+    }
+
+    :root {
+      --sky-100: #E0F7FA;
+      --sky-200: #B2EBF2;
+      --sky-300: #80DEEA;
+      --sky-400: #4DD0E1;
+      --sky-500: #26C6DA;
+      --sky-600: #00BCD4;
+      --sky-700: #00ACC1;
+      --sky-800: #00838F;
+      --sky-900: #006064;
+      --white: #FFFFFF;
+      --text-primary: #004D61;
+      --text-secondary: #546E7A;
+    }
+
+    body {
+      background: var(--sky-100);
+      min-height: 100vh;
+    }
+
+    /* App Bar with Tabs */
+    .app-bar {
+      background: linear-gradient(180deg, var(--sky-700) 0%, var(--sky-800) 100%);
+      color: white;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .app-bar-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+    }
+
+    .app-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+
+    .app-bar-icons {
+      display: flex;
+      gap: 12px;
+    }
+
+    .icon-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: transparent;
+      border: none;
+      color: white;
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      background: rgba(0,0,0,0.1);
+    }
+
+    .tab {
+      flex: 1;
+      padding: 14px;
+      text-align: center;
+      color: rgba(255,255,255,0.7);
+      font-size: 0.9rem;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      color: white;
+      border-bottom-color: var(--sky-300);
+      background: rgba(255,255,255,0.1);
+    }
+
+    /* Content */
+    .content {
+      padding: 16px;
+    }
+
+    /* Parasha Header Card */
+    .parasha-card {
+      background: linear-gradient(135deg, var(--sky-600) 0%, var(--sky-800) 100%);
+      color: white;
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .parasha-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    }
+
+    .parasha-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+
+    .parasha-name {
+      font-size: 1.8rem;
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+
+    .parasha-date {
+      opacity: 0.85;
+      font-size: 0.95rem;
+    }
+
+    .nav-arrows {
+      display: flex;
+      gap: 8px;
+    }
+
+    .nav-arrows button {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(255,255,255,0.1);
+      color: white;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+
+    /* Progress Bar */
+    .progress-section {
+      margin-top: 16px;
+    }
+
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+    }
+
+    .progress-bar {
+      height: 8px;
+      background: rgba(255,255,255,0.2);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 70%;
+      background: var(--sky-300);
+      border-radius: 4px;
+    }
+
+    /* Stats Row */
+    .stats-row {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .stat-chip {
+      flex: 1;
+      background: white;
+      border-radius: 12px;
+      padding: 16px 12px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,150,167,0.1);
+    }
+
+    .stat-chip-number {
+      font-size: 1.6rem;
+      font-weight: bold;
+      color: var(--sky-700);
+    }
+
+    .stat-chip-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    /* List Section */
+    .list-section {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,150,167,0.1);
+    }
+
+    .list-header {
+      padding: 16px;
+      border-bottom: 1px solid var(--sky-100);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .list-title {
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .list-action {
+      color: var(--sky-600);
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .list-item {
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--sky-100);
+    }
+
+    .list-item:last-child {
+      border-bottom: none;
+    }
+
+    .list-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--sky-300) 0%, var(--sky-500) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: bold;
+    }
+
+    .list-content {
+      flex: 1;
+    }
+
+    .list-name {
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .list-sub {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .list-badge {
+      background: var(--sky-100);
+      color: var(--sky-700);
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+    }
+
+    /* FAB */
+    .fab {
+      position: fixed;
+      bottom: 24px;
+      left: 24px;
+      width: 60px;
+      height: 60px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--sky-500) 0%, var(--sky-700) 100%);
+      color: white;
+      border: none;
+      font-size: 1.6rem;
+      box-shadow: 0 4px 16px rgba(0,188,212,0.4);
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <!-- App Bar -->
+  <header class="app-bar">
+    <div class="app-bar-top">
+      <div class="app-title">קלגבאי</div>
+      <div class="app-bar-icons">
+        <button class="icon-btn">🔔</button>
+        <button class="icon-btn">⚙️</button>
+      </div>
+    </div>
+    <div class="tabs">
+      <div class="tab active">ראשי</div>
+      <div class="tab">חברים</div>
+      <div class="tab">מצוות</div>
+      <div class="tab">שיבוץ</div>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <main class="content">
+    <!-- Parasha Card -->
+    <div class="parasha-card">
+      <div class="parasha-top">
+        <div>
+          <div class="parasha-name">פרשת נשא</div>
+          <div class="parasha-date">שבת י"ב סיון תשפ"ו • 7 ביוני 2026</div>
+        </div>
+        <div class="nav-arrows">
+          <button>→</button>
+          <button>←</button>
+        </div>
+      </div>
+      <div class="progress-section">
+        <div class="progress-label">
+          <span>התקדמות שיבוץ</span>
+          <span>12/17 מצוות</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-chip">
+        <div class="stat-chip-number">45</div>
+        <div class="stat-chip-label">חברים</div>
+      </div>
+      <div class="stat-chip">
+        <div class="stat-chip-number">17</div>
+        <div class="stat-chip-label">מצוות</div>
+      </div>
+      <div class="stat-chip">
+        <div class="stat-chip-number">5</div>
+        <div class="stat-chip-label">פנויות</div>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="list-section">
+      <div class="list-header">
+        <span class="list-title">שיבוצים אחרונים</span>
+        <span class="list-action">הצג הכל</span>
+      </div>
+      <div class="list-item">
+        <div class="list-avatar">יכ</div>
+        <div class="list-content">
+          <div class="list-name">יוסי כהן</div>
+          <div class="list-sub">עליה לתורה - שלישי</div>
+        </div>
+        <div class="list-badge">היום</div>
+      </div>
+      <div class="list-item">
+        <div class="list-avatar">של</div>
+        <div class="list-content">
+          <div class="list-name">שמעון לוי</div>
+          <div class="list-sub">פתיחת ההיכל</div>
+        </div>
+        <div class="list-badge">אתמול</div>
+      </div>
+      <div class="list-item">
+        <div class="list-avatar">דב</div>
+        <div class="list-content">
+          <div class="list-name">דוד ברק</div>
+          <div class="list-sub">הפטרה</div>
+        </div>
+        <div class="list-badge">אתמול</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- FAB -->
+  <button class="fab">📷</button>
+</body>
+</html>

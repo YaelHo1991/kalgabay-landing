@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KalGabay - Archive Desktop View</title>
+  <link rel="stylesheet" href="../shared-styles.css">
+  <style>
+    body {
+      display: flex;
+      min-height: 100vh;
+      background: var(--gray-50);
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 260px;
+      background: white;
+      border-left: 1px solid var(--gray-200);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      right: 0;
+      top: 0;
+      bottom: 0;
+    }
+
+    .sidebar-header {
+      padding: 24px;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, var(--primary-500), var(--primary-700));
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 1.3rem;
+    }
+
+    .logo-text {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--primary-700);
+    }
+
+    .sidebar-nav {
+      flex: 1;
+      padding: 16px 12px;
+    }
+
+    .nav-section-title {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--gray-400);
+      text-transform: uppercase;
+      padding: 8px 12px;
+      margin-top: 16px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: 10px;
+      color: var(--gray-600);
+      cursor: pointer;
+      margin-bottom: 4px;
+    }
+
+    .nav-item:hover {
+      background: var(--gray-50);
+      color: var(--gray-900);
+    }
+
+    .nav-item.active {
+      background: var(--primary-50);
+      color: var(--primary-700);
+    }
+
+    .nav-item-icon {
+      font-size: 1.2rem;
+      width: 24px;
+      text-align: center;
+    }
+
+    .nav-item-text {
+      font-size: 0.95rem;
+      font-weight: 500;
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      margin-right: 260px;
+      padding: 24px 32px;
+    }
+
+    /* Page Header */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+    }
+
+    .page-title-section {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .page-icon {
+      width: 56px;
+      height: 56px;
+      background: var(--primary-100);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+    }
+
+    .page-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+
+    .page-subtitle {
+      font-size: 0.9rem;
+      color: var(--gray-500);
+      margin-top: 4px;
+    }
+
+    .page-actions {
+      display: flex;
+      gap: 12px;
+    }
+
+    /* Week Selector */
+    .week-selector-bar {
+      background: white;
+      border-radius: 16px;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .week-nav {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .week-arrow {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid var(--gray-200);
+      background: white;
+      color: var(--gray-600);
+      font-size: 1.2rem;
+      cursor: pointer;
+    }
+
+    .week-arrow:hover {
+      background: var(--gray-50);
+    }
+
+    .week-info {
+      text-align: center;
+    }
+
+    .week-parasha {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+
+    .week-date {
+      font-size: 0.85rem;
+      color: var(--gray-500);
+      margin-top: 2px;
+    }
+
+    .week-dropdown {
+      padding: 12px 20px;
+      border-radius: 12px;
+      border: 1px solid var(--gray-200);
+      background: white;
+      font-size: 0.95rem;
+      cursor: pointer;
+    }
+
+    /* Stats Row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .stat-card-value {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--primary-600);
+    }
+
+    .stat-card-label {
+      font-size: 0.85rem;
+      color: var(--gray-500);
+      margin-top: 4px;
+    }
+
+    /* Content Tabs */
+    .content-tabs {
+      display: flex;
+      gap: 4px;
+      background: var(--gray-100);
+      padding: 4px;
+      border-radius: 12px;
+      width: fit-content;
+      margin-bottom: 20px;
+    }
+
+    .content-tab {
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--gray-600);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+    }
+
+    .content-tab.active {
+      background: white;
+      color: var(--primary-600);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Table */
+    .data-table-container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .table-toolbar {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-100);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .table-search {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--gray-100);
+      padding: 10px 16px;
+      border-radius: 10px;
+      width: 280px;
+    }
+
+    .table-search input {
+      border: none;
+      background: transparent;
+      width: 100%;
+      outline: none;
+    }
+
+    .table-filters {
+      display: flex;
+      gap: 10px;
+    }
+
+    .filter-btn {
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--gray-200);
+      background: white;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .data-table thead {
+      background: var(--gray-50);
+    }
+
+    .data-table th {
+      padding: 14px 20px;
+      text-align: right;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .data-table td {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .data-table tr:hover {
+      background: var(--gray-50);
+    }
+
+    .table-member {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .table-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: var(--primary-100);
+      color: var(--primary-600);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.85rem;
+    }
+
+    .table-name {
+      font-weight: 500;
+      color: var(--gray-900);
+    }
+
+    .table-phone {
+      font-size: 0.8rem;
+      color: var(--gray-400);
+    }
+
+    .table-mitzva {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .table-price {
+      font-weight: 600;
+      color: var(--primary-600);
+    }
+
+    .table-status {
+      display: inline-flex;
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 500;
+    }
+
+    .table-status.paid {
+      background: var(--success-100);
+      color: var(--success-600);
+    }
+
+    .table-status.unpaid {
+      background: var(--warning-100);
+      color: var(--warning-600);
+    }
+
+    .table-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .table-action-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      border: 1px solid var(--gray-200);
+      background: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .table-action-btn:hover {
+      background: var(--gray-50);
+    }
+
+    /* Pagination */
+    .table-pagination {
+      padding: 16px 20px;
+      border-top: 1px solid var(--gray-100);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--gray-50);
+    }
+
+    .pagination-info {
+      font-size: 0.85rem;
+      color: var(--gray-500);
+    }
+
+    .pagination-controls {
+      display: flex;
+      gap: 4px;
+    }
+
+    .pagination-btn {
+      padding: 8px 14px;
+      border: 1px solid var(--gray-200);
+      background: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    .pagination-btn.active {
+      background: var(--primary-500);
+      border-color: var(--primary-500);
+      color: white;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+    }
+
+    .btn-primary {
+      background: var(--primary-500);
+      color: white;
+    }
+
+    .btn-outline {
+      background: white;
+      border: 1px solid var(--gray-200);
+      color: var(--gray-600);
+    }
+
+    /* Demo navigation */
+    .demo-nav {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--gray-900);
+      padding: 12px 24px;
+      border-radius: 14px;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .demo-nav a {
+      color: white;
+      text-decoration: none;
+      font-size: 0.85rem;
+      opacity: 0.7;
+    }
+
+    .demo-nav a:hover {
+      opacity: 1;
+    }
+
+    .demo-nav span {
+      color: var(--gray-500);
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <div class="logo-icon">🏛️</div>
+        <div class="logo-text">קלגבאי</div>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">ראשי</div>
+      <div class="nav-item">
+        <span class="nav-item-icon">🏠</span>
+        <span class="nav-item-text">דף הבית</span>
+      </div>
+      <div class="nav-section-title">ניהול</div>
+      <div class="nav-item">
+        <span class="nav-item-icon">👥</span>
+        <span class="nav-item-text">מתפללים</span>
+      </div>
+      <div class="nav-item">
+        <span class="nav-item-icon">📜</span>
+        <span class="nav-item-text">מצוות</span>
+      </div>
+      <div class="nav-section-title">נתונים</div>
+      <div class="nav-item active">
+        <span class="nav-item-icon">📊</span>
+        <span class="nav-item-text">ארכיון</span>
+      </div>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <header class="page-header">
+      <div class="page-title-section">
+        <div class="page-icon">📊</div>
+        <div>
+          <h1 class="page-title">ארכיון רכישות</h1>
+          <p class="page-subtitle">צפייה בהיסטוריית הרכישות לפי שבוע</p>
+        </div>
+      </div>
+      <div class="page-actions">
+        <button class="btn btn-outline">
+          <span>📥</span>
+          ייצוא לאקסל
+        </button>
+        <button class="btn btn-primary">
+          <span>📧</span>
+          שלח תזכורות
+        </button>
+      </div>
+    </header>
+
+    <!-- Week Selector -->
+    <div class="week-selector-bar">
+      <div class="week-nav">
+        <button class="week-arrow">→</button>
+        <div class="week-info">
+          <div class="week-parasha">פרשת בהעלותך</div>
+          <div class="week-date">שבת ט"ו סיון תשפ"ו | 30 במאי 2026</div>
+        </div>
+        <button class="week-arrow">←</button>
+      </div>
+      <select class="week-dropdown">
+        <option>פרשת בהעלותך - 30/05/2026</option>
+        <option>פרשת נשא - 23/05/2026</option>
+        <option>חג השבועות - 22/05/2026</option>
+        <option>פרשת במדבר - 16/05/2026</option>
+      </select>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-card-value">12</div>
+        <div class="stat-card-label">מצוות נמכרו</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-value">8</div>
+        <div class="stat-card-label">קונים</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-value">₪4,250</div>
+        <div class="stat-card-label">סה"כ הכנסות</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-value">₪1,400</div>
+        <div class="stat-card-label">ממתין לתשלום</div>
+      </div>
+    </div>
+
+    <!-- Content Tabs -->
+    <div class="content-tabs">
+      <button class="content-tab active">תצוגת מצוות</button>
+      <button class="content-tab">תצוגת מתפללים</button>
+    </div>
+
+    <!-- Data Table -->
+    <div class="data-table-container">
+      <div class="table-toolbar">
+        <div class="table-search">
+          <span>🔍</span>
+          <input type="text" placeholder="חיפוש..." />
+        </div>
+        <div class="table-filters">
+          <button class="filter-btn">
+            <span>🔽</span>
+            סטטוס
+          </button>
+          <button class="filter-btn">
+            <span>💰</span>
+            מחיר
+          </button>
+        </div>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>מצווה</th>
+            <th>קונה</th>
+            <th>מחיר</th>
+            <th>סטטוס</th>
+            <th>תאריך</th>
+            <th>פעולות</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="table-mitzva">
+                <span>📖</span>
+                <span>עליה לתורה - שלישי</span>
+              </div>
+            </td>
+            <td>
+              <div class="table-member">
+                <div class="table-avatar">יכ</div>
+                <div>
+                  <div class="table-name">יוסי כהן</div>
+                  <div class="table-phone">050-123-4567</div>
+                </div>
+              </div>
+            </td>
+            <td class="table-price">₪180</td>
+            <td><span class="table-status paid">שולם</span></td>
+            <td>28/05/2026</td>
+            <td>
+              <div class="table-actions">
+                <button class="table-action-btn">✏️</button>
+                <button class="table-action-btn">📧</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="table-mitzva">
+                <span>🚪</span>
+                <span>פתיחת ההיכל</span>
+              </div>
+            </td>
+            <td>
+              <div class="table-member">
+                <div class="table-avatar">של</div>
+                <div>
+                  <div class="table-name">שמעון לוי</div>
+                  <div class="table-phone">052-987-6543</div>
+                </div>
+              </div>
+            </td>
+            <td class="table-price">₪350</td>
+            <td><span class="table-status unpaid">ממתין</span></td>
+            <td>28/05/2026</td>
+            <td>
+              <div class="table-actions">
+                <button class="table-action-btn">✏️</button>
+                <button class="table-action-btn">📧</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="table-mitzva">
+                <span>📜</span>
+                <span>הפטרה</span>
+              </div>
+            </td>
+            <td>
+              <div class="table-member">
+                <div class="table-avatar">דב</div>
+                <div>
+                  <div class="table-name">דוד ברק</div>
+                  <div class="table-phone">054-555-5555</div>
+                </div>
+              </div>
+            </td>
+            <td class="table-price">₪200</td>
+            <td><span class="table-status paid">שולם</span></td>
+            <td>27/05/2026</td>
+            <td>
+              <div class="table-actions">
+                <button class="table-action-btn">✏️</button>
+                <button class="table-action-btn">📧</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="table-mitzva">
+                <span>⬆️</span>
+                <span>הגבהה</span>
+              </div>
+            </td>
+            <td>
+              <div class="table-member">
+                <div class="table-avatar">אג</div>
+                <div>
+                  <div class="table-name">אברהם גולן</div>
+                  <div class="table-phone">053-111-2233</div>
+                </div>
+              </div>
+            </td>
+            <td class="table-price">₪150</td>
+            <td><span class="table-status unpaid">ממתין</span></td>
+            <td>27/05/2026</td>
+            <td>
+              <div class="table-actions">
+                <button class="table-action-btn">✏️</button>
+                <button class="table-action-btn">📧</button>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td>
+              <div class="table-mitzva">
+                <span>🔄</span>
+                <span>גלילה</span>
+              </div>
+            </td>
+            <td>
+              <div class="table-member">
+                <div class="table-avatar">מר</div>
+                <div>
+                  <div class="table-name">משה רוזן</div>
+                  <div class="table-phone">050-999-8877</div>
+                </div>
+              </div>
+            </td>
+            <td class="table-price">₪120</td>
+            <td><span class="table-status paid">שולם</span></td>
+            <td>26/05/2026</td>
+            <td>
+              <div class="table-actions">
+                <button class="table-action-btn">✏️</button>
+                <button class="table-action-btn">📧</button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="table-pagination">
+        <div class="pagination-info">מציג 1-5 מתוך 12 רשומות</div>
+        <div class="pagination-controls">
+          <button class="pagination-btn">הקודם</button>
+          <button class="pagination-btn active">1</button>
+          <button class="pagination-btn">2</button>
+          <button class="pagination-btn">3</button>
+          <button class="pagination-btn">הבא</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Demo Navigation -->
+  <nav class="demo-nav">
+    <span>ארכיון - מחשב</span>
+    <a href="index.html">← חזרה</a>
+    <a href="android.html">אנדרואיד →</a>
+  </nav>
+</body>
+</html>

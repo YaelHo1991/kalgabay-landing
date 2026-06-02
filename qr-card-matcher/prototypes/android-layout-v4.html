@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KalGabay - Android V4 - Minimal Clean</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+    }
+
+    :root {
+      --azure-50: #F0F9FF;
+      --azure-100: #E0F2FE;
+      --azure-200: #BAE6FD;
+      --azure-300: #7DD3FC;
+      --azure-400: #38BDF8;
+      --azure-500: #0EA5E9;
+      --azure-600: #0284C7;
+      --azure-700: #0369A1;
+      --azure-800: #075985;
+      --azure-900: #0C4A6E;
+      --white: #FFFFFF;
+      --gray-50: #F8FAFC;
+      --gray-100: #F1F5F9;
+      --gray-600: #475569;
+      --gray-900: #0F172A;
+    }
+
+    body {
+      background: var(--gray-50);
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
+
+    /* Status Bar Spacer */
+    .status-bar {
+      height: 24px;
+      background: var(--azure-700);
+    }
+
+    /* Header */
+    .header {
+      background: var(--azure-700);
+      color: white;
+      padding: 16px 20px 24px;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .menu-btn {
+      width: 40px;
+      height: 40px;
+      border: none;
+      background: transparent;
+      color: white;
+      font-size: 1.4rem;
+      cursor: pointer;
+    }
+
+    .header-title {
+      font-size: 1.2rem;
+      font-weight: 600;
+    }
+
+    .profile-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      border: none;
+      color: white;
+      font-size: 1rem;
+    }
+
+    /* Search */
+    .search-bar {
+      background: rgba(255,255,255,0.15);
+      border-radius: 12px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: rgba(255,255,255,0.8);
+    }
+
+    .search-icon {
+      font-size: 1.1rem;
+    }
+
+    .search-placeholder {
+      font-size: 0.95rem;
+    }
+
+    /* Content */
+    .content {
+      padding: 20px;
+    }
+
+    /* Week Selector */
+    .week-selector {
+      background: white;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .week-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .week-arrow {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      border: 1px solid var(--azure-200);
+      background: white;
+      color: var(--azure-600);
+      font-size: 1.1rem;
+      cursor: pointer;
+    }
+
+    .week-info {
+      text-align: center;
+    }
+
+    .week-parasha {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--gray-900);
+    }
+
+    .week-date {
+      font-size: 0.9rem;
+      color: var(--gray-600);
+      margin-top: 4px;
+    }
+
+    /* Quick Stats */
+    .quick-stats {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .stat-box {
+      flex: 1;
+      background: white;
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .stat-box.highlight {
+      background: linear-gradient(135deg, var(--azure-500) 0%, var(--azure-600) 100%);
+      color: white;
+    }
+
+    .stat-number {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--azure-600);
+    }
+
+    .stat-box.highlight .stat-number {
+      color: white;
+    }
+
+    .stat-text {
+      font-size: 0.8rem;
+      color: var(--gray-600);
+      margin-top: 2px;
+    }
+
+    .stat-box.highlight .stat-text {
+      color: rgba(255,255,255,0.85);
+    }
+
+    /* Action Cards */
+    .action-cards {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .action-card {
+      background: white;
+      border-radius: 14px;
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .action-card:active {
+      transform: scale(0.98);
+    }
+
+    .action-card-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+
+    .action-card:nth-child(1) .action-card-icon { background: var(--azure-100); }
+    .action-card:nth-child(2) .action-card-icon { background: #E0F2F1; }
+    .action-card:nth-child(3) .action-card-icon { background: #FFF3E0; }
+    .action-card:nth-child(4) .action-card-icon { background: #F3E5F5; }
+
+    .action-card-text {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--gray-900);
+    }
+
+    /* Recent Section */
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .section-link {
+      font-size: 0.9rem;
+      color: var(--azure-600);
+      cursor: pointer;
+    }
+
+    .recent-list {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .recent-item {
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border-bottom: 1px solid var(--gray-100);
+    }
+
+    .recent-item:last-child {
+      border-bottom: none;
+    }
+
+    .recent-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--azure-100);
+      color: var(--azure-600);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .recent-info {
+      flex: 1;
+    }
+
+    .recent-name {
+      font-weight: 500;
+      color: var(--gray-900);
+      font-size: 0.95rem;
+    }
+
+    .recent-detail {
+      font-size: 0.85rem;
+      color: var(--gray-600);
+    }
+
+    .recent-time {
+      font-size: 0.8rem;
+      color: var(--azure-500);
+      background: var(--azure-50);
+      padding: 4px 10px;
+      border-radius: 8px;
+    }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      display: flex;
+      justify-content: space-around;
+      padding: 10px 0 6px;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.06);
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+      padding: 4px 12px;
+    }
+
+    .nav-icon {
+      font-size: 1.4rem;
+      color: var(--gray-600);
+    }
+
+    .nav-label {
+      font-size: 0.7rem;
+      color: var(--gray-600);
+    }
+
+    .nav-item.active .nav-icon,
+    .nav-item.active .nav-label {
+      color: var(--azure-600);
+    }
+
+    .nav-item.active .nav-icon {
+      position: relative;
+    }
+
+    .nav-item.active .nav-icon::after {
+      content: '';
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 4px;
+      background: var(--azure-600);
+      border-radius: 50%;
+    }
+  </style>
+</head>
+<body>
+  <div class="status-bar"></div>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-top">
+      <button class="menu-btn">☰</button>
+      <div class="header-title">קלגבאי</div>
+      <button class="profile-btn">👤</button>
+    </div>
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <span class="search-placeholder">חיפוש חבר, מצווה...</span>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <main class="content">
+    <!-- Week Selector -->
+    <div class="week-selector">
+      <div class="week-nav">
+        <button class="week-arrow">→</button>
+        <div class="week-info">
+          <div class="week-parasha">פרשת נשא</div>
+          <div class="week-date">שבת י"ב סיון תשפ"ו</div>
+        </div>
+        <button class="week-arrow">←</button>
+      </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="quick-stats">
+      <div class="stat-box highlight">
+        <div class="stat-number">5</div>
+        <div class="stat-text">מצוות פנויות</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number">12</div>
+        <div class="stat-text">משובצים</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-number">45</div>
+        <div class="stat-text">חברים</div>
+      </div>
+    </div>
+
+    <!-- Action Cards -->
+    <div class="action-cards">
+      <div class="action-card">
+        <div class="action-card-icon">📷</div>
+        <div class="action-card-text">סריקת QR</div>
+      </div>
+      <div class="action-card">
+        <div class="action-card-icon">➕</div>
+        <div class="action-card-text">שיבוץ חדש</div>
+      </div>
+      <div class="action-card">
+        <div class="action-card-icon">📧</div>
+        <div class="action-card-text">שליחת תזכורות</div>
+      </div>
+      <div class="action-card">
+        <div class="action-card-icon">📊</div>
+        <div class="action-card-text">דוחות</div>
+      </div>
+    </div>
+
+    <!-- Recent -->
+    <div class="section-header">
+      <span class="section-title">שיבוצים אחרונים</span>
+      <span class="section-link">הצג הכל</span>
+    </div>
+    <div class="recent-list">
+      <div class="recent-item">
+        <div class="recent-avatar">יכ</div>
+        <div class="recent-info">
+          <div class="recent-name">יוסי כהן</div>
+          <div class="recent-detail">עליה לתורה - שלישי</div>
+        </div>
+        <div class="recent-time">היום</div>
+      </div>
+      <div class="recent-item">
+        <div class="recent-avatar">של</div>
+        <div class="recent-info">
+          <div class="recent-name">שמעון לוי</div>
+          <div class="recent-detail">פתיחת ההיכל</div>
+        </div>
+        <div class="recent-time">אתמול</div>
+      </div>
+      <div class="recent-item">
+        <div class="recent-avatar">דב</div>
+        <div class="recent-info">
+          <div class="recent-name">דוד ברק</div>
+          <div class="recent-detail">הפטרה</div>
+        </div>
+        <div class="recent-time">אתמול</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom Nav -->
+  <nav class="bottom-nav">
+    <div class="nav-item active">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">ראשי</span>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">👥</span>
+      <span class="nav-label">חברים</span>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">📜</span>
+      <span class="nav-label">מצוות</span>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">🔗</span>
+      <span class="nav-label">שיבוץ</span>
+    </div>
+    <div class="nav-item">
+      <span class="nav-icon">⚙️</span>
+      <span class="nav-label">הגדרות</span>
+    </div>
+  </nav>
+</body>
+</html>

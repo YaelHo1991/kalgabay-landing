@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KalGabay - Printing Flow - Step 2 - Select Items</title>
+  <link rel="stylesheet" href="../shared-styles.css">
+  <style>
+    body {
+      background: var(--gray-100);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .modal {
+      background: white;
+      border-radius: 24px;
+      width: 100%;
+      max-width: 700px;
+      max-height: 90vh;
+      box-shadow: var(--shadow-xl);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-header {
+      padding: 24px 28px;
+      border-bottom: 1px solid var(--gray-100);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .modal-header-right {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .modal-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--primary-100);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+
+    .modal-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: var(--gray-900);
+    }
+
+    .modal-subtitle {
+      font-size: 0.85rem;
+      color: var(--gray-500);
+      margin-top: 2px;
+    }
+
+    .modal-close {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      border: none;
+      background: var(--gray-100);
+      color: var(--gray-600);
+      cursor: pointer;
+      font-size: 1.2rem;
+    }
+
+    /* Stepper */
+    .stepper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px 28px;
+      background: var(--gray-50);
+      border-bottom: 1px solid var(--gray-100);
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .stepper-step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .stepper-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--gray-200);
+      color: var(--gray-500);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .stepper-step.active .stepper-circle {
+      background: var(--primary-500);
+      color: white;
+    }
+
+    .stepper-step.completed .stepper-circle {
+      background: var(--success-500);
+      color: white;
+    }
+
+    .stepper-label {
+      font-size: 0.85rem;
+      color: var(--gray-500);
+    }
+
+    .stepper-step.active .stepper-label {
+      color: var(--primary-600);
+      font-weight: 500;
+    }
+
+    .stepper-step.completed .stepper-label {
+      color: var(--success-600);
+    }
+
+    .stepper-line {
+      width: 40px;
+      height: 2px;
+      background: var(--gray-200);
+    }
+
+    .stepper-line.completed {
+      background: var(--success-500);
+    }
+
+    /* Toolbar */
+    .toolbar {
+      padding: 16px 28px;
+      border-bottom: 1px solid var(--gray-100);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--gray-100);
+      padding: 10px 16px;
+      border-radius: 10px;
+      width: 240px;
+    }
+
+    .search-box input {
+      border: none;
+      background: transparent;
+      font-size: 0.9rem;
+      width: 100%;
+      outline: none;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .toolbar-btn {
+      padding: 10px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--gray-200);
+      background: white;
+      color: var(--gray-600);
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .toolbar-btn:hover {
+      background: var(--gray-50);
+    }
+
+    .toolbar-btn.active {
+      background: var(--primary-50);
+      border-color: var(--primary-300);
+      color: var(--primary-700);
+    }
+
+    .modal-body {
+      padding: 20px 28px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    /* Items List */
+    .items-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .item-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 18px;
+      background: var(--gray-50);
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      border: 2px solid transparent;
+    }
+
+    .item-row:hover {
+      background: var(--primary-50);
+    }
+
+    .item-row.selected {
+      background: var(--primary-50);
+      border-color: var(--primary-300);
+    }
+
+    .item-checkbox {
+      width: 24px;
+      height: 24px;
+      border-radius: 8px;
+      border: 2px solid var(--gray-300);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: transparent;
+      flex-shrink: 0;
+      transition: all var(--transition-fast);
+    }
+
+    .item-row.selected .item-checkbox {
+      background: var(--primary-500);
+      border-color: var(--primary-500);
+      color: white;
+    }
+
+    .item-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--primary-100);
+      color: var(--primary-600);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+    }
+
+    .item-info {
+      flex: 1;
+    }
+
+    .item-name {
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 2px;
+    }
+
+    .item-code {
+      font-size: 0.8rem;
+      color: var(--gray-500);
+      font-family: monospace;
+    }
+
+    .item-badge {
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      background: var(--gray-200);
+      color: var(--gray-600);
+    }
+
+    .item-badge.printed {
+      background: var(--success-100);
+      color: var(--success-600);
+    }
+
+    .item-badge.not-printed {
+      background: var(--warning-100);
+      color: var(--warning-600);
+    }
+
+    /* Selection Summary */
+    .selection-summary {
+      position: sticky;
+      bottom: 0;
+      background: white;
+      padding: 16px 28px;
+      border-top: 1px solid var(--gray-100);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .selection-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .selection-count {
+      background: var(--primary-100);
+      color: var(--primary-700);
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-weight: 600;
+    }
+
+    .selection-text {
+      font-size: 0.9rem;
+      color: var(--gray-600);
+    }
+
+    .modal-footer {
+      padding: 20px 28px;
+      border-top: 1px solid var(--gray-100);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--gray-50);
+      flex-shrink: 0;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 24px;
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      transition: all var(--transition-fast);
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--primary-500);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-600);
+    }
+
+    .btn-secondary {
+      background: var(--gray-100);
+      color: var(--gray-700);
+    }
+
+    .btn-secondary:hover {
+      background: var(--gray-200);
+    }
+
+    /* Demo navigation */
+    .demo-nav {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--gray-900);
+      padding: 12px 24px;
+      border-radius: 14px;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .demo-nav a {
+      color: white;
+      text-decoration: none;
+      font-size: 0.85rem;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+    }
+
+    .demo-nav a:hover {
+      opacity: 1;
+    }
+
+    .demo-nav span {
+      color: var(--gray-500);
+      font-size: 0.8rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-header-right">
+        <div class="modal-icon">👥</div>
+        <div>
+          <h2 class="modal-title">בחירת מתפללים להדפסה</h2>
+          <p class="modal-subtitle">סמן את המתפללים שברצונך להדפיס להם מדבקות</p>
+        </div>
+      </div>
+      <button class="modal-close">✕</button>
+    </div>
+
+    <!-- Stepper -->
+    <div class="stepper">
+      <div class="stepper-step completed">
+        <div class="stepper-circle">✓</div>
+        <span class="stepper-label">סוג</span>
+      </div>
+      <div class="stepper-line completed"></div>
+      <div class="stepper-step active">
+        <div class="stepper-circle">2</div>
+        <span class="stepper-label">בחירה</span>
+      </div>
+      <div class="stepper-line"></div>
+      <div class="stepper-step">
+        <div class="stepper-circle">3</div>
+        <span class="stepper-label">מיקום</span>
+      </div>
+      <div class="stepper-line"></div>
+      <div class="stepper-step">
+        <div class="stepper-circle">4</div>
+        <span class="stepper-label">הדפסה</span>
+      </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="search-box">
+        <span>🔍</span>
+        <input type="text" placeholder="חיפוש..." />
+      </div>
+      <div class="toolbar-actions">
+        <button class="toolbar-btn active">
+          <span>✅</span>
+          בחר הכל
+        </button>
+        <button class="toolbar-btn">
+          <span>🆕</span>
+          חדשים בלבד
+        </button>
+      </div>
+    </div>
+
+    <div class="modal-body">
+      <div class="items-list">
+        <div class="item-row selected">
+          <div class="item-checkbox">✓</div>
+          <div class="item-avatar">יכ</div>
+          <div class="item-info">
+            <div class="item-name">יוסי כהן</div>
+            <div class="item-code">MBR-001</div>
+          </div>
+          <div class="item-badge printed">הודפס</div>
+        </div>
+
+        <div class="item-row selected">
+          <div class="item-checkbox">✓</div>
+          <div class="item-avatar">של</div>
+          <div class="item-info">
+            <div class="item-name">שמעון לוי</div>
+            <div class="item-code">MBR-002</div>
+          </div>
+          <div class="item-badge not-printed">חדש</div>
+        </div>
+
+        <div class="item-row selected">
+          <div class="item-checkbox">✓</div>
+          <div class="item-avatar">דב</div>
+          <div class="item-info">
+            <div class="item-name">דוד ברק</div>
+            <div class="item-code">MBR-003</div>
+          </div>
+          <div class="item-badge not-printed">חדש</div>
+        </div>
+
+        <div class="item-row">
+          <div class="item-checkbox">✓</div>
+          <div class="item-avatar">אג</div>
+          <div class="item-info">
+            <div class="item-name">אברהם גולן</div>
+            <div class="item-code">MBR-004</div>
+          </div>
+          <div class="item-badge printed">הודפס</div>
+        </div>
+
+        <div class="item-row selected">
+          <div class="item-checkbox">✓</div>
+          <div class="item-avatar">מר</div>
+          <div class="item-info">
+            <div class="item-name">משה רוזן</div>
+            <div class="item-code">MBR-005</div>
+          </div>
+          <div class="item-badge not-printed">חדש</div>
+        </div>
+
+        <div class="item-row">
+          <div class="item-checkbox">✓</div>
+          <div class="item-avatar">נח</div>
+          <div class="item-info">
+            <div class="item-name">נתן חיים</div>
+            <div class="item-code">MBR-006</div>
+          </div>
+          <div class="item-badge printed">הודפס</div>
+        </div>
+
+        <div class="item-row selected">
+          <div class="item-checkbox">✓</div>
+          <div class="item-avatar">יד</div>
+          <div class="item-info">
+            <div class="item-name">יעקב דהן</div>
+            <div class="item-code">MBR-007</div>
+          </div>
+          <div class="item-badge not-printed">חדש</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="selection-summary">
+      <div class="selection-info">
+        <div class="selection-count">5 נבחרו</div>
+        <span class="selection-text">מתוך 45 מתפללים</span>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <a href="flow-step-1.html" class="btn btn-secondary">
+        <span>→</span>
+        חזרה
+      </a>
+      <a href="flow-step-3.html" class="btn btn-primary">
+        המשך לבחירת מיקום
+        <span>←</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Demo Navigation -->
+  <nav class="demo-nav">
+    <span>שלב 2/4</span>
+    <a href="flow-step-1.html">← הקודם</a>
+    <a href="flow-step-3.html">הבא →</a>
+  </nav>
+</body>
+</html>
