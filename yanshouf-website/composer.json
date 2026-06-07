@@ -1,0 +1,12 @@
+{
+    "name": "yanshouf/website",
+    "description": "YanShouf - Synagogue Management System",
+    "type": "project",
+    "require": {
+        "php": ">=7.4",
+        "tecnickcom/tcpdf": "^6.6"
+    },
+    "config": {
+        "vendor-dir": "vendor"
+    }
+}

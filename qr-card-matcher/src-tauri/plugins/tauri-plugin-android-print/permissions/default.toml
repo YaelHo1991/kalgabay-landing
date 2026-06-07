@@ -1,0 +1,8 @@
+[default]
+description = "Default permissions for the android-print plugin"
+permissions = [
+    "allow-discoverPrinters",
+    "allow-printPdf",
+    "allow-stopDiscovery",
+    "allow-openPdf"
+]

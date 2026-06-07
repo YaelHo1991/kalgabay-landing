@@ -142,6 +142,11 @@
   min-width: 180px;
 }
 
+/* Export button in year selector - hidden by default on desktop, shown in mobile landscape */
+.year-export-btn {
+  display: none;
+}
+
 /* Weeks List */
 .weeks-list {
   display: flex;
@@ -160,12 +165,11 @@
 }
 
 .week-card:hover {
-  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
 }
 
 .week-card.expanded {
   border-color: var(--blue-300);
-  box-shadow: 0 4px 20px rgba(37, 99, 235, 0.15);
 }
 
 /* Placeholder week cards (no data yet) */
@@ -206,7 +210,7 @@
 }
 
 .week-card-header:hover {
-  background: linear-gradient(135deg, var(--blue-100) 0%, var(--blue-50) 100%);
+  background: linear-gradient(135deg, var(--blue-50) 0%, white 100%);
 }
 
 .week-info {
@@ -246,9 +250,9 @@
   color: var(--gray-900);
 }
 
-.week-date {
+.archive-page .week-date {
   font-size: 0.85rem;
-  color: var(--gray-500);
+  color: var(--gray-700);
   margin-top: 2px;
 }
 
@@ -804,89 +808,5 @@
   font-size: 1rem;
 }
 
-/* Responsive */
-@media (max-width: 1400px) {
-  .week-dashboard-layout {
-    grid-template-columns: 1fr 300px;
-  }
-}
-
-@media (max-width: 1200px) {
-  .archive-content-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .archive-sidebar {
-    position: static;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-  }
-
-  .sidebar-week-title {
-    grid-column: span 2;
-  }
-
-  .week-dashboard-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .week-sidebar-area {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 20px;
-  }
-}
-
-@media (max-width: 768px) {
-  .archive-page {
-    padding: 16px;
-  }
-
-  .archive-header {
-    flex-direction: column;
-    gap: 16px;
-    align-items: flex-start;
-  }
-
-  .week-card-header {
-    flex-direction: column;
-    gap: 16px;
-    align-items: flex-start;
-  }
-
-  .week-stats {
-    width: 100%;
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-
-  .week-progress-mini {
-    flex: 1;
-    min-width: 100px;
-  }
-
-  .week-progress-section {
-    grid-template-columns: 1fr;
-  }
-
-  .progress-bar-section {
-    grid-column: span 1;
-  }
-
-  .archive-sidebar {
-    grid-template-columns: 1fr;
-  }
-
-  .sidebar-week-title {
-    grid-column: span 1;
-  }
-
-  .week-sidebar-area {
-    grid-template-columns: 1fr;
-  }
-
-  .week-card-content {
-    padding: 16px;
-  }
-}
+/* ========== RESPONSIVE ========== */
+/* Responsive media queries disabled - layout is now fixed for desktop Tauri app */

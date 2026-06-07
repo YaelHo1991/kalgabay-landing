@@ -4,3 +4,8 @@ export { ProgressWidget, UnpaidWidget } from './SidebarWidgets';
 export { PurchasesTable } from './PurchasesTable';
 export { DashboardDesktopView } from './DashboardDesktopView';
 export { PrintLabelsPage } from './PrintLabelsPage';
+export { MembersPage } from './MembersPage';
+export { MitzvotPage } from './MitzvotPage';
+export { ArchivePage } from './ArchivePage';
+export { ScanningModal } from './ScanningModal';
+export { ReminderPreviewModal } from './ReminderPreviewModal';

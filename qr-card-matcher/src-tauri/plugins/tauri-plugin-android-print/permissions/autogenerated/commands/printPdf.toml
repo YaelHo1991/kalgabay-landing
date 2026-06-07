@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-printPdf"
+description = "Enables the printPdf command without any pre-configured scope."
+commands.allow = ["printPdf"]
+
+[[permission]]
+identifier = "deny-printPdf"
+description = "Denies the printPdf command without any pre-configured scope."
+commands.deny = ["printPdf"]

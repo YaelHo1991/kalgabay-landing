@@ -18,6 +18,9 @@ import { generatePDF } from "../../utils/pdfGenerator";
 import { exportMitzvotToExcel, importMitzvotFromExcel } from "../../services/excelService";
 import "./MitzvotPage.css";
 
+// Check if running on Android
+const isAndroidDevice = navigator.userAgent.toLowerCase().includes('android');
+
 // Printer interface
 interface Printer {
   name: string;
@@ -654,20 +657,24 @@ export function MitzvotPage() {
           </div>
         </div>
         <div className="page-header-left">
-          <button className="header-btn outline" onClick={() => setShowImportModal(true)}>
-            <ImportIcon />
-            {t("common.import")}
-          </button>
-          <button
-            className={`header-btn outline ${isExporting ? 'exporting' : ''}`}
-            onClick={handleExport}
-            disabled={isExporting || mitzvot.length === 0}
-          >
-            <span className="export-animation">
-              <ExportIcon />
-              {isExporting ? t("common.exporting") || "מייצא..." : t("common.export")}
-            </span>
-          </button>
+          {!isAndroidDevice && (
+            <>
+              <button className="header-btn outline" onClick={() => setShowImportModal(true)}>
+                <ImportIcon />
+                {t("common.import")}
+              </button>
+              <button
+                className={`header-btn outline ${isExporting ? 'exporting' : ''}`}
+                onClick={handleExport}
+                disabled={isExporting || mitzvot.length === 0}
+              >
+                <span className="export-animation">
+                  <ExportIcon />
+                  {isExporting ? t("common.exporting") || "מייצא..." : t("common.export")}
+                </span>
+              </button>
+            </>
+          )}
           <button className="header-btn primary" onClick={() => { resetForm(); setShowCreateModal(true); }}>
             <PlusIcon />
             {t("mitzvot.addNew")}
@@ -764,7 +771,7 @@ export function MitzvotPage() {
                 </div>
                 <div className="mitzva-info">
                   <div className="mitzva-name">{mitzva.name}</div>
-                  <div className="mitzva-code">{mitzva.code.length > 10 ? `מצ-${mitzva.id}` : mitzva.code}</div>
+                  <div className="mitzva-code">מצווה-{mitzva.id}</div>
                 </div>
               </div>
 
@@ -785,10 +792,12 @@ export function MitzvotPage() {
                   <EditIcon />
                   {t("common.edit")}
                 </button>
-                <button className="action-btn primary" onClick={() => handlePrint(mitzva)}>
-                  <PrintIcon />
-                  {t("common.print")}
-                </button>
+                {!isAndroidDevice && (
+                  <button className="action-btn primary" onClick={() => handlePrint(mitzva)}>
+                    <PrintIcon />
+                    {t("common.print")}
+                  </button>
+                )}
                 <button className="action-btn danger" onClick={() => handleDeleteClick(mitzva.id)}>
                   <DeleteIcon />
                 </button>

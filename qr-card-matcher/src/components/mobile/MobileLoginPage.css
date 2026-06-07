@@ -1,0 +1,180 @@
+/**
+ * MobileLoginPage Styles
+ * Matches prototype design
+ */
+
+.mobile-login {
+  min-height: 100vh;
+  min-height: 100dvh;
+  background: linear-gradient(135deg, #2563EB 0%, #1E40AF 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  padding-top: max(24px, env(safe-area-inset-top));
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
+  box-sizing: border-box;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  direction: rtl;
+}
+
+.mobile-login-header {
+  text-align: center;
+  color: white;
+  margin-bottom: 32px;
+}
+
+.mobile-login-logo {
+  font-size: 3rem;
+  margin-bottom: 8px;
+}
+
+.mobile-login-header h1 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0 0 6px 0;
+}
+
+.mobile-login-header p {
+  font-size: 0.9rem;
+  opacity: 0.8;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.mobile-login-form {
+  background: white;
+  border-radius: 20px;
+  padding: 24px;
+  width: 100%;
+  max-width: 360px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+.mobile-input-group {
+  margin-bottom: 16px;
+}
+
+.mobile-input-group label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #4B5563;
+  margin-bottom: 6px;
+  text-align: right;
+}
+
+.mobile-input-group input {
+  width: 100%;
+  padding: 14px;
+  font-size: 1rem;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  box-sizing: border-box;
+  transition: border-color 0.2s;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.mobile-input-group input:focus {
+  outline: none;
+  border-color: #3B82F6;
+}
+
+.mobile-input-group input:disabled {
+  background: #F9FAFB;
+}
+
+.mobile-remember-me {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: #4B5563;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-checkbox {
+  width: 22px;
+  height: 22px;
+  border: 2px solid #D1D5DB;
+  border-radius: 6px;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.mobile-checkbox.checked {
+  background: #3B82F6;
+  border-color: #3B82F6;
+}
+
+.mobile-checkbox svg {
+  width: 14px;
+  height: 14px;
+  color: white;
+}
+
+.mobile-remember-me:active .mobile-checkbox {
+  transform: scale(0.95);
+}
+
+.mobile-login-error {
+  background: #FEE2E2;
+  color: #DC2626;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.mobile-login-button {
+  width: 100%;
+  padding: 16px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.mobile-login-button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.mobile-login-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mobile-login-links {
+  text-align: center;
+  margin-top: 16px;
+}
+
+.mobile-login-links a {
+  color: #3B82F6;
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+
+/* Hide old info section */
+.mobile-login-info {
+  display: none;
+}
+
+.mobile-forgot-password {
+  display: none;
+}

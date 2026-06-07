@@ -1,11 +1,14 @@
 import { useState, useEffect } from "react";
 import {
-  getWeeksByYear,
+  getWeeksWithPurchases,
   getMitzvotWithPurchasers,
   MitzvaWithPurchaser,
 } from "../../database";
 import { ProgressWidget, UnpaidWidget } from "./SidebarWidgets";
 import "./ArchivePage.css";
+
+// Check if running on Android
+const isAndroidDevice = navigator.userAgent.toLowerCase().includes('android');
 
 // SVG Icons
 const DocumentIcon = () => (
@@ -78,14 +81,6 @@ const getInitials = (firstName: string, lastName: string): string => {
   return `${firstName.charAt(0)}${lastName.charAt(0)}`;
 };
 
-// All parshiot in order (Hebrew calendar year)
-const PARSHIOT: string[] = [
-  "בראשית", "נח", "לך לך", "וירא", "חיי שרה", "תולדות", "ויצא", "וישלח", "וישב", "מקץ", "ויגש", "ויחי",
-  "שמות", "וארא", "בא", "בשלח", "יתרו", "משפטים", "תרומה", "תצווה", "כי תשא", "ויקהל", "פקודי",
-  "ויקרא", "צו", "שמיני", "תזריע", "מצורע", "אחרי מות", "קדושים", "אמור", "בהר", "בחוקותי",
-  "במדבר", "נשא", "בהעלותך", "שלח", "קרח", "חקת", "בלק", "פנחס", "מטות", "מסעי",
-  "דברים", "ואתחנן", "עקב", "ראה", "שופטים", "כי תצא", "כי תבוא", "ניצבים", "וילך", "האזינו", "וזאת הברכה"
-];
 
 
 // Member with their mitzvot grouped
@@ -141,15 +136,25 @@ export function ArchivePage({ onSendReminder, onEditPurchase }: ArchivePageProps
   const loadWeeks = async () => {
     setLoading(true);
     try {
-      // Get weeks for current and previous year
+      // Get only weeks that have purchases
+      const weeksWithPurchases = await getWeeksWithPurchases();
+
+      // Extract available years from weeks with purchases
+      const yearsSet = new Set<number>();
+      weeksWithPurchases.forEach(w => yearsSet.add(w.year));
       const currentYear = new Date().getFullYear();
-      const years = [currentYear, currentYear - 1, currentYear - 2];
+      // Always include current year and previous 2 years
+      yearsSet.add(currentYear);
+      yearsSet.add(currentYear - 1);
+      yearsSet.add(currentYear - 2);
+      const years = Array.from(yearsSet).sort((a, b) => b - a);
       setAvailableYears(years);
 
-      const yearWeeks = await getWeeksByYear(selectedYear);
+      // Filter weeks for selected year
+      const yearWeeks = weeksWithPurchases.filter(w => w.year === selectedYear);
 
-      // Load stats for each existing week from DB
-      const existingWeeksWithStats: WeekWithStats[] = await Promise.all(
+      // Load stats for each week
+      const weeksWithStats: WeekWithStats[] = await Promise.all(
         yearWeeks.map(async (week) => {
           // Get all mitzvot with purchasers for this week
           const mitzvot = await getMitzvotWithPurchasers(week.week_number, week.year);
@@ -222,80 +227,22 @@ export function ArchivePage({ onSendReminder, onEditPurchase }: ArchivePageProps
         })
       );
 
-      // Create a map of existing parshiot from DB
-      const existingParshiot = new Map<string, WeekWithStats>();
-      existingWeeksWithStats.forEach(w => {
-        if (w.parasha_name_he) {
-          existingParshiot.set(w.parasha_name_he, w);
-        }
-      });
-
-      // Create placeholder weeks for all parshiot that don't have data
-      const allWeeksWithStats: WeekWithStats[] = [];
-
-      // Add all parshiot (existing or placeholder)
-      PARSHIOT.forEach((parasha, index) => {
-        const existing = existingParshiot.get(parasha);
-        if (existing) {
-          allWeeksWithStats.push(existing);
-        } else {
-          // Create placeholder for this parasha
-          allWeeksWithStats.push({
-            id: null,
-            week_number: index + 1,
-            year: selectedYear,
-            parasha_name_he: parasha,
-            parasha_name_en: null,
-            parasha_ref: null,
-            shabbat_date: null,
-            created_at: new Date().toISOString(),
-            totalAmount: 0,
-            paidAmount: 0,
-            unpaidCount: 0,
-            mitzvotCount: 0,
-            membersCount: 0,
-            memberGroups: [],
-            isPlaceholder: true,
-          });
-        }
-      });
-
-      // Add special holiday readings that exist in DB but aren't regular parshiot
-      existingWeeksWithStats.forEach(w => {
-        if (w.parasha_name_he && !PARSHIOT.includes(w.parasha_name_he)) {
-          // This is likely a holiday reading
-          allWeeksWithStats.unshift(w); // Add to beginning
-        }
-      });
-
-      // Sort: weeks with data first (by date), then placeholders in parsha order
-      allWeeksWithStats.sort((a, b) => {
-        // Weeks with purchases first
-        if (a.membersCount > 0 && b.membersCount === 0) return -1;
-        if (a.membersCount === 0 && b.membersCount > 0) return 1;
-
-        // Both have data - sort by date
+      // Sort by date (newest first)
+      weeksWithStats.sort((a, b) => {
         if (a.shabbat_date && b.shabbat_date) {
           return new Date(b.shabbat_date).getTime() - new Date(a.shabbat_date).getTime();
         }
-
-        // Sort by parsha order
-        const aIndex = PARSHIOT.indexOf(a.parasha_name_he || '');
-        const bIndex = PARSHIOT.indexOf(b.parasha_name_he || '');
-        return aIndex - bIndex;
+        return b.week_number - a.week_number;
       });
 
-      setWeeks(allWeeksWithStats);
+      setWeeks(weeksWithStats);
 
-      // Auto-expand first week with unpaid or first with data
-      const firstUnpaid = allWeeksWithStats.find(w => w.unpaidCount > 0);
+      // Auto-expand first week with unpaid or first week
+      const firstUnpaid = weeksWithStats.find(w => w.unpaidCount > 0);
       if (firstUnpaid && firstUnpaid.parasha_name_he) {
         setExpandedParasha(firstUnpaid.parasha_name_he);
-      } else {
-        const firstWithData = allWeeksWithStats.find(w => w.membersCount > 0);
-        if (firstWithData && firstWithData.parasha_name_he) {
-          setExpandedParasha(firstWithData.parasha_name_he);
-        }
+      } else if (weeksWithStats.length > 0 && weeksWithStats[0].parasha_name_he) {
+        setExpandedParasha(weeksWithStats[0].parasha_name_he);
       }
     } catch (error) {
       console.error("Error loading weeks:", error);
@@ -385,12 +332,14 @@ export function ArchivePage({ onSendReminder, onEditPurchase }: ArchivePageProps
             <p className="archive-subtitle">צפייה בהיסטוריית הרכישות לפי שבוע</p>
           </div>
         </div>
-        <div className="archive-actions">
-          <button className="btn btn-outline">
-            <ExportIcon />
-            ייצוא לאקסל
-          </button>
-        </div>
+        {!isAndroidDevice && (
+          <div className="archive-actions">
+            <button className="btn btn-outline">
+              <ExportIcon />
+              ייצוא לאקסל
+            </button>
+          </div>
+        )}
       </header>
 
       {/* Content Layout - Weeks + Sidebar */}
@@ -411,6 +360,12 @@ export function ArchivePage({ onSendReminder, onEditPurchase }: ArchivePageProps
                 </option>
               ))}
             </select>
+            {!isAndroidDevice && (
+              <button className="btn btn-outline btn-sm year-export-btn">
+                <ExportIcon />
+                ייצוא לאקסל
+              </button>
+            )}
           </div>
 
           {/* Weeks List */}
@@ -535,10 +490,12 @@ export function ArchivePage({ onSendReminder, onEditPurchase }: ArchivePageProps
                                 {week.membersCount} מתפללים • {week.mitzvotCount} מצוות
                               </span>
                             </div>
-                            <button className="btn btn-outline btn-sm">
-                              <ExportIcon />
-                              ייצוא
-                            </button>
+                            {!isAndroidDevice && (
+                              <button className="btn btn-outline btn-sm">
+                                <ExportIcon />
+                                ייצוא
+                              </button>
+                            )}
                           </div>
                           <table className="data-table">
                             <thead>

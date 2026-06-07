@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #4FA8D9 0%, #163D75 100%);
+  background: linear-gradient(135deg, #3B82F6 0%, #1E3A8A 100%);
   padding: 20px;
 }
 
@@ -11,10 +11,11 @@
   background: white;
   border-radius: 20px;
   padding: 40px;
-  max-width: 400px;
-  width: 100%;
+  width: 400px;
+  height: 750px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   direction: rtl;
+  position: relative;
 }
 
 .login-header {
@@ -36,10 +37,14 @@
 
 .login-form {
   margin-bottom: 20px;
+  width: 100%;
 }
 
 .input-group {
   margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
 }
 
 .input-group label {
@@ -47,21 +52,29 @@
   margin-bottom: 8px;
   color: #333;
   font-weight: 500;
+  text-align: right;
+  width: 100%;
 }
 
 .input-group input {
-  width: 100%;
+  width: 100% !important;
+  max-width: 100%;
   padding: 14px 16px;
   border: 2px solid #e0e0e0;
   border-radius: 10px;
   font-size: 16px;
   transition: border-color 0.2s, box-shadow 0.2s;
   box-sizing: border-box;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  display: block;
+  height: 50px;
 }
 
 .input-group input:focus {
   outline: none;
-  border-color: #4FA8D9;
+  border-color: #3B82F6;
   box-shadow: 0 0 0 3px rgba(79, 168, 217, 0.2);
 }
 
@@ -73,7 +86,7 @@
 .login-button {
   width: 100%;
   padding: 14px;
-  background: linear-gradient(135deg, #4FA8D9 0%, #1E5AA8 100%);
+  background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
   color: white;
   border: none;
   border-radius: 10px;
@@ -93,24 +106,18 @@
   cursor: not-allowed;
 }
 
-.message {
-  padding: 14px;
-  border-radius: 10px;
-  margin-bottom: 20px;
+.message-text {
+  margin-top: 12px;
+  font-size: 13px;
   text-align: center;
-  font-size: 14px;
 }
 
-.message.success {
-  background: #e8f5e9;
-  color: #2e7d32;
-  border: 1px solid #a5d6a7;
+.message-text.success {
+  color: #92400e;
 }
 
-.message.error {
-  background: #ffebee;
+.message-text.error {
   color: #c62828;
-  border: 1px solid #ef9a9a;
 }
 
 .login-info {
@@ -180,7 +187,7 @@
 .back-button {
   background: transparent;
   border: none;
-  color: #4FA8D9;
+  color: #3B82F6;
   margin-top: 10px;
   cursor: pointer;
   text-decoration: underline;
@@ -211,37 +218,118 @@
 }
 
 .checkbox-custom {
-  width: 20px;
-  height: 20px;
-  border: 2px solid #ddd;
-  border-radius: 5px;
+  width: 22px;
+  height: 22px;
+  border: 2px solid #d1d5db;
+  border-radius: 6px;
   background: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: all 0.15s;
   flex-shrink: 0;
+  font-size: 0.75rem;
+  color: white;
+  font-weight: bold;
 }
 
 .checkbox-label input[type="checkbox"]:checked + .checkbox-custom {
-  background: linear-gradient(135deg, #4FA8D9 0%, #1E5AA8 100%);
-  border-color: #4FA8D9;
-}
-
-.checkbox-label input[type="checkbox"]:checked + .checkbox-custom::after {
-  content: '';
-  width: 6px;
-  height: 10px;
-  border: solid white;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-  margin-bottom: 2px;
+  background: #3B82F6;
+  border-color: #3B82F6;
 }
 
 .checkbox-label input[type="checkbox"]:focus + .checkbox-custom {
-  box-shadow: 0 0 0 3px rgba(79, 168, 217, 0.2);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
 }
 
 .checkbox-label:hover .checkbox-custom {
-  border-color: #4FA8D9;
+  border-color: #3B82F6;
+}
+
+/* Mobile Responsive Styles */
+@media screen and (max-width: 768px) {
+  .login-container {
+    min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height - accounts for mobile browser bars */
+    padding: 16px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    box-sizing: border-box;
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 400px;
+    height: auto;
+    min-height: auto;
+    max-height: calc(100dvh - 32px - env(safe-area-inset-bottom, 0px));
+    padding: 24px 20px;
+    overflow-y: auto;
+    box-sizing: border-box;
+  }
+
+  .login-header {
+    margin-bottom: 20px;
+  }
+
+  .login-header h1 {
+    font-size: 24px;
+  }
+
+  .login-header p {
+    font-size: 13px;
+  }
+
+  .input-group {
+    margin-bottom: 16px;
+  }
+
+  .input-group input {
+    padding: 12px 14px;
+    height: 46px;
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+
+  .login-button {
+    padding: 14px;
+    font-size: 16px;
+  }
+
+  .login-info {
+    padding: 16px;
+    margin-top: 16px;
+  }
+
+  .login-info h3 {
+    font-size: 15px;
+  }
+
+  .login-info li {
+    font-size: 13px;
+  }
+
+  .login-method-toggle {
+    margin-bottom: 16px;
+  }
+
+  .method-button {
+    padding: 8px;
+    font-size: 13px;
+  }
+}
+
+/* Very small screens (phones in portrait) */
+@media screen and (max-width: 400px) {
+  .login-container {
+    padding: 12px;
+    padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .login-card {
+    padding: 20px 16px;
+    border-radius: 16px;
+  }
+
+  .login-header h1 {
+    font-size: 22px;
+  }
 }

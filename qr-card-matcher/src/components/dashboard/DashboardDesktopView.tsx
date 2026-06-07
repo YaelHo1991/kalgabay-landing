@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import {
   Week,
   Stats,
-  MemberWithPurchases,
-  getMembersWithPurchases,
+  MemberWithPurchaseDetails,
+  getMembersWithPurchaseDetails,
   getStatsByWeek,
   ensureCurrentWeekExists,
   getWeeksByYear,
@@ -12,6 +12,7 @@ import {
   getHebrewWeekNumber,
   fetchParashaFromSefaria,
 } from "../../database";
+import { updateMemberPaymentStatusSync } from "../../hooks/useSync";
 import { getStoredUser, ApiUser } from "../../services/apiService";
 import { DashboardHeader } from "./DashboardHeader";
 import { NavTabs, TabId } from "./NavTabs";
@@ -43,10 +44,11 @@ export function DashboardDesktopView({
   const [searchQuery, setSearchQuery] = useState("");
   const [user, setUser] = useState<ApiUser | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
-  const [membersWithPurchases, setMembersWithPurchases] = useState<MemberWithPurchases[]>([]);
+  const [membersWithPurchases, setMembersWithPurchases] = useState<MemberWithPurchaseDetails[]>([]);
   const [loading, setLoading] = useState(true);
   const [weeks, setWeeks] = useState<Week[]>([]);
   const [currentIndex, setCurrentIndex] = useState(-1);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Load user data
   useEffect(() => {
@@ -101,7 +103,7 @@ export function DashboardDesktopView({
         const weekStats = await getStatsByWeek(selectedWeek.week_number, selectedWeek.year);
         setStats(weekStats);
 
-        const members = await getMembersWithPurchases(selectedWeek.week_number, selectedWeek.year);
+        const members = await getMembersWithPurchaseDetails(selectedWeek.week_number, selectedWeek.year);
         setMembersWithPurchases(members);
       } catch (error) {
         console.error("Error loading data:", error);
@@ -191,29 +193,121 @@ export function DashboardDesktopView({
   };
 
   const getPaidAmount = () => {
-    // TODO: Get actual paid amount from database
-    // For now, assume all is unpaid
-    return 0;
+    return membersWithPurchases.reduce((sum, m) => {
+      const paidPurchases = m.purchases.filter(p => p.payment_status === 'paid');
+      return sum + paidPurchases.reduce((psum, p) => psum + (p.bid_price || 0), 0);
+    }, 0);
+  };
+
+  const getTotalMitzvot = () => {
+    return membersWithPurchases.reduce((sum, m) => sum + m.purchases.length, 0);
   };
 
   // Get unpaid members for widget
   const getUnpaidMembers = () => {
     return membersWithPurchases
-      .filter(m => m.total_price > 0)
-      .map(m => ({
-        id: m.id,
-        firstName: m.first_name,
-        lastName: m.last_name,
-        amount: m.total_price || 0,
-        email: m.email || undefined,
-        phone: m.phone || undefined,
-      }));
+      .filter(m => m.purchases.some(p => p.payment_status === 'unpaid'))
+      .map(m => {
+        const unpaidAmount = m.purchases
+          .filter(p => p.payment_status === 'unpaid')
+          .reduce((sum, p) => sum + (p.bid_price || 0), 0);
+        return {
+          id: m.id,
+          firstName: m.first_name,
+          lastName: m.last_name,
+          amount: unpaidAmount,
+          email: m.email || undefined,
+          phone: m.phone || undefined,
+        };
+      });
+  };
+
+  // Export weekly report to CSV
+  const handleExport = async () => {
+    console.log('handleExport called', { selectedWeek, membersCount: membersWithPurchases.length });
+
+    if (!selectedWeek || membersWithPurchases.length === 0) {
+      console.log('Export aborted - no data');
+      return;
+    }
+
+    setIsExporting(true);
+
+    try {
+      // Small delay for animation feedback
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Build CSV content
+      const headers = ['שם מתפלל', 'טלפון', 'מצווה', 'מחיר', 'סטטוס תשלום'];
+      const rows: string[][] = [];
+
+      for (const member of membersWithPurchases) {
+        for (const purchase of member.purchases) {
+          rows.push([
+            `${member.first_name} ${member.last_name}`,
+            member.phone || '',
+            purchase.mitzva_name,
+            purchase.bid_price.toString(),
+            purchase.payment_status === 'paid' ? 'שולם' : 'ממתין'
+          ]);
+        }
+      }
+
+      console.log('CSV rows:', rows.length);
+
+      // Add BOM for Hebrew support in Excel
+      const BOM = '\uFEFF';
+      const csvContent = BOM + [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+      ].join('\n');
+
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const fileName = `דוח_רכישות_${selectedWeek.parasha_name_he || `שבוע_${selectedWeek.week_number}`}_${selectedWeek.year}.csv`;
+      link.download = fileName;
+      console.log('Downloading file:', fileName);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      console.log('Export completed');
+    } catch (error) {
+      console.error('Error exporting report:', error);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const handleSendAllReminders = () => {
     // Send reminders to all unpaid members
     const unpaidMembers = getUnpaidMembers();
     unpaidMembers.forEach(m => onSendReminder(m.id));
+  };
+
+  // Handle marking member as paid/unpaid
+  const handleMarkAsPaid = async (memberId: number) => {
+    if (!selectedWeek) return;
+
+    const member = membersWithPurchases.find(m => m.id === memberId);
+    if (!member) return;
+
+    // Toggle status - if all paid, mark as unpaid, otherwise mark as paid
+    const allPaid = member.purchases.every(p => p.payment_status === 'paid');
+    const newStatus = allPaid ? 'unpaid' : 'paid';
+
+    try {
+      await updateMemberPaymentStatusSync(memberId, selectedWeek.week_number, selectedWeek.year, newStatus);
+
+      // Reload data
+      const members = await getMembersWithPurchaseDetails(selectedWeek.week_number, selectedWeek.year);
+      setMembersWithPurchases(members);
+    } catch (error) {
+      console.error("Error updating payment status:", error);
+    }
   };
 
   if (loading && !selectedWeek) {
@@ -233,10 +327,6 @@ export function DashboardDesktopView({
         userName={getUserName()}
         userInitials={getUserInitials()}
         selectedWeek={selectedWeek}
-        onPrevWeek={handlePrevWeek}
-        onNextWeek={handleNextWeek}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
       />
 
       {/* Navigation Tabs */}
@@ -245,6 +335,7 @@ export function DashboardDesktopView({
         onTabChange={handleTabChange}
         membersCount={stats?.totalMembers}
         mitzvotCount={stats?.totalMitzvot}
+        isAndroid={navigator.userAgent.toLowerCase().includes('android')}
       />
 
       {/* Main Content */}
@@ -254,13 +345,14 @@ export function DashboardDesktopView({
           <PurchasesTable
             members={membersWithPurchases}
             totalMembers={membersWithPurchases.length}
-            totalMitzvot={stats?.totalMitzvot || 0}
+            totalMitzvot={getTotalMitzvot()}
             totalAmount={getTotalAmount()}
             onScan={onScan}
             onFilter={() => {/* TODO: implement filter */}}
-            onExport={() => {/* TODO: implement export */}}
+            onExport={handleExport}
+            isExporting={isExporting}
             onEditPurchase={onEditPurchase}
-            onSendReminder={onSendReminder}
+            onMarkAsPaid={handleMarkAsPaid}
             searchQuery={searchQuery}
           />
 

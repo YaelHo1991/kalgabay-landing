@@ -1,22 +1,18 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { initDatabase, ensureCurrentWeekExists, getSetting, Week, createOrUpdateWeek, getHebrewWeekNumber } from "./database";
-import { isGmailConnected, connectGmailAccount, getGmailEmail, disconnectGmail } from "./services/gmailService";
+import { isGmailConnected, connectGmailAccount, getGmailEmail, disconnectGmail, initGmailOAuthListener } from "./services/gmailService";
 import { ApiUser, getStoredUser, apiLogout, apiGetCurrentUser, isLoggedIn } from "./services/apiService";
-import { useSwipeNavigation } from "./hooks/useSwipeNavigation";
 import { Dashboard } from "./components/Dashboard";
-import { MemberManager } from "./components/MemberManager";
-import { MitzvaManager } from "./components/MitzvaManager";
-import { LinkingPage } from "./components/LinkingPage";
 import { SyncSettings } from "./components/SyncSettings";
 import { TitleBar } from "./components/TitleBar";
-import { HamburgerMenu } from "./components/HamburgerMenu";
 import { HebrewYearSidebar } from "./components/HebrewYearSidebar";
 import LoginPage from "./components/LoginPage";
 import { useSync } from "./hooks/useSync";
+import MobileApp from "./components/mobile/MobileApp";
+import { platform } from "@tauri-apps/plugin-os";
 
-type Page = "dashboard" | "members" | "mitzvot" | "linking";
-const PAGES: Page[] = ["dashboard", "members", "mitzvot", "linking"];
+type Page = "dashboard";
 
 function App() {
   const { t, i18n } = useTranslation();
@@ -41,9 +37,33 @@ function App() {
   const lastSyncedUid = useRef<number | null>(null);
 
   // Detect Android and Mobile
+  // Use synchronous detection first to prevent crash loop, then verify with Tauri API
   useEffect(() => {
+    // Immediate synchronous detection (prevents flash of wrong UI)
     const userAgent = navigator.userAgent.toLowerCase();
-    setIsAndroid(userAgent.includes('android'));
+    const isAndroidUA = userAgent.includes('android') || userAgent.includes('wv'); // wv = WebView
+    console.log('Initial platform detection, userAgent:', userAgent, 'isAndroid:', isAndroidUA);
+    setIsAndroid(isAndroidUA);
+
+    // Then verify with Tauri API (async, but won't cause crash if it fails)
+    const verifyPlatform = async () => {
+      try {
+        const currentPlatform = await platform();
+        console.log('Tauri platform API returned:', currentPlatform);
+        if (currentPlatform === 'android') {
+          setIsAndroid(true);
+          // Initialize Gmail OAuth deep link listener for Android
+          initGmailOAuthListener();
+        }
+      } catch (e) {
+        console.log('Platform API not available, using userAgent detection');
+        // If userAgent suggests Android, still init the listener
+        if (isAndroidUA) {
+          initGmailOAuthListener();
+        }
+      }
+    };
+    verifyPlatform();
 
     const checkMobile = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -81,11 +101,6 @@ function App() {
       }
 
       setSelectedWeek(week);
-      // Only navigate to dashboard if not already on members/mitzvot pages
-      // Members and mitzvot are global data and don't depend on week selection
-      if (currentPage !== "members" && currentPage !== "mitzvot") {
-        setCurrentPage("dashboard");
-      }
       setRefreshKey(k => k + 1);
     } catch (error) {
       console.error("Error selecting event:", error);
@@ -132,13 +147,17 @@ function App() {
   // Handle Gmail connection - only allows connection with the licensed email
   const handleConnectGmail = async () => {
     setConnectingGmail(true);
+    console.log('Starting Gmail connection for user:', user?.email);
     try {
       // Pass the licensed email to restrict connection to only that email
       const result = await connectGmailAccount(user?.email);
+      console.log('Gmail connection result:', result);
       if (result.success) {
         setGmailConnected(true);
         setGmailEmail(result.email || null);
+        console.log('Gmail connected successfully:', result.email);
       } else if (result.error) {
+        console.error('Gmail connection failed:', result.error);
         alert(result.error);
       }
     } catch (error) {
@@ -148,29 +167,6 @@ function App() {
       setConnectingGmail(false);
     }
   };
-
-  // Swipe navigation for mobile
-  const navigateToNextPage = useCallback(() => {
-    const currentIndex = PAGES.indexOf(currentPage);
-    if (currentIndex < PAGES.length - 1) {
-      setCurrentPage(PAGES[currentIndex + 1]);
-    }
-  }, [currentPage]);
-
-  const navigateToPrevPage = useCallback(() => {
-    const currentIndex = PAGES.indexOf(currentPage);
-    if (currentIndex > 0) {
-      setCurrentPage(PAGES[currentIndex - 1]);
-    }
-  }, [currentPage]);
-
-  // RTL: swipe right goes to previous, swipe left goes to next
-  useSwipeNavigation({
-    onSwipeLeft: navigateToNextPage,
-    onSwipeRight: navigateToPrevPage,
-    threshold: 75,
-    enabled: dbReady && !!user,
-  });
 
   // Check authentication status using API service
   useEffect(() => {
@@ -238,7 +234,6 @@ function App() {
     const init = async () => {
       try {
         await initDatabase();
-        await ensureCurrentWeekExists();
 
         // Load saved language from database
         const savedLang = await getSetting("app_language");
@@ -247,6 +242,12 @@ function App() {
         }
 
         setDbReady(true);
+
+        // Run ensureCurrentWeekExists in background - don't block app initialization
+        // This fetches parasha info from Sefaria API which can be slow/fail on mobile
+        ensureCurrentWeekExists().catch(err => {
+          console.warn("Background week initialization failed:", err);
+        });
       } catch (err) {
         console.error("Database initialization error:", err);
         setError(t("app.dbError"));
@@ -270,6 +271,28 @@ function App() {
     }
   };
 
+  // Handle login success - set user and trigger sync
+  // IMPORTANT: This hook must be defined BEFORE any conditional returns
+  const handleLoginSuccess = useCallback(async (loggedInUser: ApiUser) => {
+    setUser(loggedInUser);
+
+    // Immediately start syncing from cloud after login
+    if (dbReady) {
+      console.log('Starting immediate sync after login for user:', loggedInUser.id);
+      setSyncingFromCloud(true);
+      lastSyncedUid.current = loggedInUser.id;
+      try {
+        const success = await syncFromCloud();
+        console.log('Post-login sync completed, success:', success);
+      } catch (err) {
+        console.error('Post-login sync failed:', err);
+        lastSyncedUid.current = null;
+      } finally {
+        setSyncingFromCloud(false);
+        setRefreshKey(k => k + 1);
+      }
+    }
+  }, [dbReady, syncFromCloud]);
 
   if (error) {
     return (
@@ -331,14 +354,27 @@ function App() {
     );
   }
 
-  // Show login page if not authenticated
+  // Show Mobile UI for Android (handles both login and main app)
+  // NOTE: Do NOT use key={refreshKey} here - it causes infinite remount loops on Android
+  // MobileApp handles its own data refreshing internally
+  if (isAndroid) {
+    return (
+      <MobileApp
+        user={user}
+        onLoginSuccess={handleLoginSuccess}
+        onLogout={handleLogout}
+        gmailConnected={gmailConnected}
+        gmailEmail={gmailEmail}
+        onConnectGmail={handleConnectGmail}
+      />
+    );
+  }
+
+  // Desktop: Show login page if not authenticated
   if (!user) {
     return (
       <LoginPage
-        onLoginSuccess={(loggedInUser) => {
-          setUser(loggedInUser);
-          setRefreshKey(k => k + 1);
-        }}
+        onLoginSuccess={handleLoginSuccess}
       />
     );
   }
@@ -359,12 +395,6 @@ function App() {
             onTabChange={setDashboardTab}
           />
         );
-      case "members":
-        return <MemberManager key={refreshKey} />;
-      case "mitzvot":
-        return <MitzvaManager key={refreshKey} />;
-      case "linking":
-        return <LinkingPage key={refreshKey} />;
       default:
         return (
           <Dashboard
@@ -463,16 +493,6 @@ function App() {
           </button>
         </div>
       </div>
-      )}
-
-      {/* Hamburger Menu with Settings - Only on mobile */}
-      {isMobile && (
-        <HamburgerMenu
-          currentPage={currentPage}
-          onNavigate={setCurrentPage}
-          onSettingsClick={() => setShowSyncSettings(true)}
-          user={user}
-        />
       )}
 
       <main style={{ flex: 1, paddingTop: isAndroid ? "65px" : (isMobile ? "20px" : "0") }}>

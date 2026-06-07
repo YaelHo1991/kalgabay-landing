@@ -20,6 +20,9 @@ import { ApiUser } from "../../services/apiService";
 import { exportMembersToExcel, importMembersFromExcel } from "../../services/excelService";
 import "./MembersPage.css";
 
+// Check if running on Android
+const isAndroidDevice = navigator.userAgent.toLowerCase().includes('android');
+
 // Printer interface
 interface Printer {
   name: string;
@@ -748,20 +751,24 @@ export function MembersPage({ currentUser }: MembersPageProps) {
           </div>
         </div>
         <div className="page-header-left">
-          <button className="header-btn outline" onClick={() => setShowImportModal(true)}>
-            <ImportIcon />
-            {t("common.import")}
-          </button>
-          <button
-            className={`header-btn outline ${isExporting ? 'exporting' : ''}`}
-            onClick={handleExport}
-            disabled={isExporting || members.length === 0}
-          >
-            <span className="export-animation">
-              <ExportIcon />
-              {isExporting ? t("common.exporting") || "מייצא..." : t("common.export")}
-            </span>
-          </button>
+          {!isAndroidDevice && (
+            <>
+              <button className="header-btn outline" onClick={() => setShowImportModal(true)}>
+                <ImportIcon />
+                {t("common.import")}
+              </button>
+              <button
+                className={`header-btn outline ${isExporting ? 'exporting' : ''}`}
+                onClick={handleExport}
+                disabled={isExporting || members.length === 0}
+              >
+                <span className="export-animation">
+                  <ExportIcon />
+                  {isExporting ? t("common.exporting") || "מייצא..." : t("common.export")}
+                </span>
+              </button>
+            </>
+          )}
           <button className="header-btn primary" onClick={() => { resetForm(); setShowCreateModal(true); }}>
             <PlusIcon />
             {t("members.addNew")}
@@ -860,7 +867,7 @@ export function MembersPage({ currentUser }: MembersPageProps) {
                 </div>
                 <div className="member-info">
                   <div className="member-name">{member.first_name} {member.last_name}</div>
-                  <div className="member-code">{member.code.length > 10 ? `מת-${member.id}` : member.code}</div>
+                  <div className="member-code">מתפלל-{member.id}</div>
                 </div>
               </div>
 
@@ -903,10 +910,12 @@ export function MembersPage({ currentUser }: MembersPageProps) {
                   <EditIcon />
                   {t("common.edit")}
                 </button>
-                <button className="action-btn primary" onClick={() => handlePrint(member)}>
-                  <PrintIcon />
-                  {t("common.print")}
-                </button>
+                {!isAndroidDevice && (
+                  <button className="action-btn primary" onClick={() => handlePrint(member)}>
+                    <PrintIcon />
+                    {t("common.print")}
+                  </button>
+                )}
                 <button className="action-btn danger" onClick={() => handleDeleteClick(member.id)}>
                   <DeleteIcon />
                 </button>

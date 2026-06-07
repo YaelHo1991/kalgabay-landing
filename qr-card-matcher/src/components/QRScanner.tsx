@@ -27,6 +27,9 @@ interface QRScannerProps {
   multiScanMode?: boolean; // Enable scanning multiple QR codes in single frame
   hideCloseButton?: boolean; // Hide the close button (for persistent scanner)
   showCameraSelector?: boolean; // Show dropdown camera selector instead of just switch button
+  hideErrorMessage?: boolean; // Hide the internal error message (parent handles it)
+  hideCameraButton?: boolean; // Hide the camera switch button
+  useFrontCamera?: boolean; // Use front-facing camera instead of back
 }
 
 // 10 distinct colors for digit encoding - HSL ranges for detection
@@ -179,7 +182,7 @@ interface CameraDevice {
   label: string;
 }
 
-export function QRScanner({ onScan, onScanWithAmount, onMultiScan, onError, onClose, autoStart = true, stopOnScan = true, resetTrigger = 0, detectAmount = false, multiScanMode = false, hideCloseButton = false, showCameraSelector = false }: QRScannerProps) {
+export function QRScanner({ onScan, onScanWithAmount, onMultiScan, onError, onClose, autoStart = true, stopOnScan = true, resetTrigger = 0, detectAmount = false, multiScanMode = false, hideCloseButton = false, showCameraSelector = false, hideErrorMessage = false, hideCameraButton = false, useFrontCamera = false }: QRScannerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isScanning, setIsScanning] = useState(false);
@@ -217,6 +220,7 @@ export function QRScanner({ onScan, onScanWithAmount, onMultiScan, onError, onCl
   const startScanning = useCallback(async (cameraId?: string) => {
     try {
       const deviceId = cameraId || selectedCamera;
+      const facingMode = useFrontCamera ? 'user' : 'environment';
 
       let constraints: MediaStreamConstraints;
 
@@ -224,7 +228,7 @@ export function QRScanner({ onScan, onScanWithAmount, onMultiScan, onError, onCl
         constraints = {
           video: {
             deviceId: { ideal: deviceId },
-            facingMode: { ideal: 'environment' },
+            facingMode: { ideal: facingMode },
             width: { ideal: 1280 },
             height: { ideal: 720 }
           }
@@ -232,7 +236,7 @@ export function QRScanner({ onScan, onScanWithAmount, onMultiScan, onError, onCl
       } else {
         constraints = {
           video: {
-            facingMode: { ideal: 'environment' },
+            facingMode: { ideal: facingMode },
             width: { ideal: 1280 },
             height: { ideal: 720 }
           }
@@ -273,8 +277,14 @@ export function QRScanner({ onScan, onScanWithAmount, onMultiScan, onError, onCl
     }
   }, [selectedCamera, onError]);
 
-  // Load available cameras on mount
+  // Load available cameras only when autoStart is true
   useEffect(() => {
+    // Don't load cameras if autoStart is false - wait for permission
+    if (!autoStart) {
+      setIsLoading(false);
+      return;
+    }
+
     const loadCameras = async () => {
       setIsLoading(true);
       setCameraError(null);
@@ -287,7 +297,7 @@ export function QRScanner({ onScan, onScanWithAmount, onMultiScan, onError, onCl
         }
 
         const tempStream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: 'environment' } }
+          video: { facingMode: { ideal: useFrontCamera ? 'user' : 'environment' } }
         });
         tempStream.getTracks().forEach(track => track.stop());
 
@@ -314,9 +324,13 @@ export function QRScanner({ onScan, onScanWithAmount, onMultiScan, onError, onCl
         console.error("Error loading cameras:", err);
         if (err instanceof Error) {
           if (err.name === 'NotAllowedError') {
-            setCameraError("יש לאשר גישה למצלמה בהגדרות האפליקציה");
+            const errorMsg = "יש לאשר גישה למצלמה בהגדרות האפליקציה";
+            setCameraError(errorMsg);
+            onError?.(errorMsg);
           } else {
-            setCameraError(`שגיאה בטעינת מצלמות: ${err.message}`);
+            const errorMsg = `שגיאה בטעינת מצלמות: ${err.message}`;
+            setCameraError(errorMsg);
+            onError?.(errorMsg);
           }
         }
       } finally {
@@ -324,7 +338,7 @@ export function QRScanner({ onScan, onScanWithAmount, onMultiScan, onError, onCl
       }
     };
     loadCameras();
-  }, []);
+  }, [autoStart]);
 
   // Auto-start scanning when cameras are loaded
   useEffect(() => {
@@ -590,14 +604,14 @@ export function QRScanner({ onScan, onScanWithAmount, onMultiScan, onError, onCl
   };
 
   return (
-    <div className="scanner-container" style={{ position: 'relative' }}>
+    <div className="scanner-container" style={{ position: 'relative', width: '100%', height: '100%' }}>
       {/* Video container with overlay */}
-      <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden' }}>
+      <div style={{ position: 'relative', borderRadius: '12px', overflow: 'hidden', width: '100%', height: '100%' }}>
         <video
           ref={videoRef}
           style={{
             width: "100%",
-            maxHeight: "300px",
+            height: "100%",
             objectFit: "cover",
             display: isScanning ? "block" : "none",
             backgroundColor: "#000",
@@ -664,7 +678,7 @@ export function QRScanner({ onScan, onScanWithAmount, onMultiScan, onError, onCl
             )}
 
             {/* Switch camera button / Camera selector dropdown */}
-            {cameras.length > 1 && (
+            {cameras.length > 1 && !hideCameraButton && (
               <div style={{ position: 'absolute', top: '10px', left: '10px', zIndex: 10 }}>
                 <button
                   onClick={() => showCameraSelector ? setShowCameraDropdown(!showCameraDropdown) : switchCamera()}
@@ -817,30 +831,6 @@ export function QRScanner({ onScan, onScanWithAmount, onMultiScan, onError, onCl
               </div>
             )}
 
-            {/* Status text overlay */}
-            <div style={{
-              position: 'absolute',
-              bottom: multiScanMode ? '70px' : '15px',
-              left: '50%',
-              transform: 'translateX(-50%)',
-              background: 'rgba(0, 0, 0, 0.7)',
-              color: 'white',
-              padding: '8px 16px',
-              borderRadius: '20px',
-              fontSize: '14px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px'
-            }}>
-              <div style={{
-                width: '8px',
-                height: '8px',
-                background: '#4CAF50',
-                borderRadius: '50%',
-                animation: 'pulse 1.5s infinite'
-              }} />
-              {multiScanMode ? 'סורק מספר קודים...' : 'מחפש קוד QR...'}
-            </div>
 
             {/* Multi-scan action buttons */}
             {multiScanMode && (
@@ -897,18 +887,6 @@ export function QRScanner({ onScan, onScanWithAmount, onMultiScan, onError, onCl
               </div>
             )}
 
-            {/* Corner frame decoration */}
-            <div style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              width: '180px',
-              height: '180px',
-              border: '2px solid rgba(201, 168, 108, 0.8)',
-              borderRadius: '12px',
-              pointerEvents: 'none'
-            }} />
           </>
         )}
       </div>
@@ -916,7 +894,7 @@ export function QRScanner({ onScan, onScanWithAmount, onMultiScan, onError, onCl
       {/* Hidden canvas for QR processing */}
       <canvas ref={canvasRef} style={{ display: "none" }} />
 
-      {cameraError && (
+      {cameraError && autoStart && !hideErrorMessage && (
         <div style={{
           background: '#ffebee',
           color: '#c62828',

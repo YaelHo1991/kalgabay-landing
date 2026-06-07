@@ -5,7 +5,6 @@
   background: linear-gradient(135deg, var(--blue-50) 0%, #f0f9ff 100%);
   min-height: calc(100vh - 120px);
   padding: 28px 32px;
-  overflow-x: hidden;
 }
 
 /* ========== PAGE HEADER ========== */
@@ -1868,74 +1867,5 @@ textarea.form-input {
   color: var(--gray-500);
 }
 
-/* Print Modal Responsive */
-@media (max-width: 800px) {
-  .print-modal-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .print-page-preview .a4-page {
-    max-width: 300px;
-  }
-}
-
 /* ========== RESPONSIVE ========== */
-@media (max-width: 768px) {
-  .members-page {
-    padding: 16px;
-  }
-
-  .page-header {
-    flex-direction: column;
-    gap: 16px;
-    align-items: stretch;
-  }
-
-  .page-header-left {
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  .header-btn {
-    flex: 1;
-    justify-content: center;
-  }
-
-  .toolbar {
-    flex-direction: column;
-    gap: 16px;
-  }
-
-  .toolbar-right,
-  .toolbar-left {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .search-box {
-    width: 100%;
-  }
-
-  .filter-buttons {
-    width: 100%;
-    justify-content: space-between;
-  }
-
-  .filter-btn {
-    flex: 1;
-    text-align: center;
-    padding: 10px 8px;
-  }
-
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-
-  .notification-options {
-    flex-direction: column;
-  }
-
-  .notification-option {
-    min-width: 100%;
-  }
-}
+/* Responsive media queries disabled - layout is now fixed for desktop Tauri app */

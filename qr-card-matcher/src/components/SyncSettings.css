@@ -1,0 +1,191 @@
+/* SyncSettings Modal Styles */
+.sync-settings-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.sync-settings-modal {
+  background: white;
+  border-radius: 16px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.sync-settings-header {
+  padding: 20px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sync-settings-header h2 {
+  margin: 0;
+  color: #1E5AA8;
+  font-size: 1.3rem;
+}
+
+.sync-settings-close {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #666;
+  padding: 5px;
+}
+
+.sync-settings-tabs {
+  display: flex;
+  border-bottom: 1px solid #eee;
+  padding: 0 20px;
+}
+
+.sync-settings-tab {
+  padding: 12px 20px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+  transition: all 0.2s;
+}
+
+.sync-settings-tab.active {
+  color: #1E5AA8;
+  border-bottom-color: #1E5AA8;
+  font-weight: 500;
+}
+
+.sync-settings-tab:hover {
+  color: #1E5AA8;
+}
+
+.sync-settings-content {
+  padding: 20px;
+}
+
+.sync-settings-section {
+  margin-bottom: 20px;
+}
+
+.sync-settings-section h3 {
+  margin: 0 0 15px 0;
+  font-size: 1rem;
+  color: #333;
+}
+
+.sync-settings-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.sync-settings-input:focus {
+  outline: none;
+  border-color: #4FA8D9;
+  box-shadow: 0 0 0 3px rgba(79, 168, 217, 0.1);
+}
+
+.sync-settings-btn {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.sync-settings-btn-primary {
+  background: linear-gradient(135deg, #4FA8D9 0%, #1E5AA8 100%);
+  color: white;
+}
+
+.sync-settings-btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(79, 168, 217, 0.4);
+}
+
+.sync-settings-btn-secondary {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.sync-settings-btn-secondary:hover {
+  background: #e0e0e0;
+}
+
+.sync-settings-btn-danger {
+  background: #DC2626;
+  color: white;
+}
+
+.sync-settings-btn-danger:hover {
+  background: #B91C1C;
+}
+
+.sync-settings-message {
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.sync-settings-message.success {
+  background: #D1FAE5;
+  color: #065F46;
+}
+
+.sync-settings-message.error {
+  background: #FEE2E2;
+  color: #991B1B;
+}
+
+.sync-settings-user-info {
+  background: #F3F4F6;
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.sync-settings-user-info p {
+  margin: 5px 0;
+}
+
+.sync-settings-language-options {
+  display: flex;
+  gap: 10px;
+}
+
+.sync-settings-language-option {
+  flex: 1;
+  padding: 15px;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  background: white;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.sync-settings-language-option.selected {
+  border-color: #4FA8D9;
+  background: #EFF6FF;
+}
+
+.sync-settings-language-option:hover {
+  border-color: #4FA8D9;
+}

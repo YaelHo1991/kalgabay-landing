@@ -213,16 +213,20 @@ export async function initDatabase(): Promise<Database> {
   }
 
   // Migration: Add bid_price column to links table if it doesn't exist
-  const linkColumns = await db.select<{ name: string }[]>("PRAGMA table_info(links)");
+  let linkColumns = await db.select<{ name: string }[]>("PRAGMA table_info(links)");
   const hasBidPrice = linkColumns.some((col) => col.name === "bid_price");
   if (!hasBidPrice) {
     await db.execute("ALTER TABLE links ADD COLUMN bid_price REAL DEFAULT 0");
+    // Refresh columns after migration
+    linkColumns = await db.select<{ name: string }[]>("PRAGMA table_info(links)");
   }
 
   // Migration: Add payment_status column to links table if it doesn't exist
   const hasPaymentStatus = linkColumns.some((col) => col.name === "payment_status");
   if (!hasPaymentStatus) {
     await db.execute("ALTER TABLE links ADD COLUMN payment_status TEXT DEFAULT 'unpaid'");
+    // Refresh columns after migration
+    linkColumns = await db.select<{ name: string }[]>("PRAGMA table_info(links)");
   }
 
   // Migration: Add reminder_sent_at column to links table if it doesn't exist
@@ -240,6 +244,17 @@ export async function initDatabase(): Promise<Database> {
     await db.execute("ALTER TABLE weeks ADD COLUMN holiday_name_en TEXT");
   }
 
+  // Fix any old links with null week_number
+  const currentWeek = getHebrewWeekNumber();
+  const currentYear = new Date().getFullYear();
+  const fixResult = await db.execute(
+    "UPDATE links SET week_number = $1, year = $2 WHERE week_number IS NULL",
+    [currentWeek, currentYear]
+  );
+  if (fixResult.rowsAffected && fixResult.rowsAffected > 0) {
+    console.log(`[initDatabase] Fixed ${fixResult.rowsAffected} links with null week_number`);
+  }
+
   return db;
 }
 
@@ -248,6 +263,21 @@ export async function getDb(): Promise<Database> {
     return initDatabase();
   }
   return db;
+}
+
+// Fix old links with null week_number - assign them to current week
+export async function fixNullWeekLinks(): Promise<number> {
+  const database = await getDb();
+  const currentWeek = getHebrewWeekNumber();
+  const currentYear = new Date().getFullYear();
+
+  const result = await database.execute(
+    "UPDATE links SET week_number = $1, year = $2 WHERE week_number IS NULL",
+    [currentWeek, currentYear]
+  );
+
+  console.log(`[fixNullWeekLinks] Fixed ${result.rowsAffected} links with null week_number`);
+  return result.rowsAffected ?? 0;
 }
 
 // Member (מתפלל) functions
@@ -565,9 +595,14 @@ export async function linkTicketToMember(
 ): Promise<number> {
   const database = await getDb();
   const currentYear = year || new Date().getFullYear();
+  // Ensure weekNumber is always set - use current week if not provided
+  const currentWeekNumber = weekNumber ?? getHebrewWeekNumber();
+
+  console.log(`[linkTicketToMember] Saving: memberId=${memberId}, ticketId=${ticketId}, week=${currentWeekNumber}, year=${currentYear}, price=${bidPrice}`);
+
   const result = await database.execute(
     "INSERT INTO links (member_id, ticket_id, week_number, year, bid_price) VALUES ($1, $2, $3, $4, $5)",
-    [memberId, ticketId, weekNumber || null, currentYear, bidPrice || 0]
+    [memberId, ticketId, currentWeekNumber, currentYear, bidPrice || 0]
   );
   return result.lastInsertId ?? 0;
 }
@@ -737,44 +772,62 @@ export interface SefariaEventInfo {
   };
 }
 
-export async function fetchEventInfoFromSefaria(date?: Date): Promise<SefariaEventInfo | null> {
+export async function fetchEventInfoFromSefaria(date?: Date, timeoutMs: number = 5000): Promise<SefariaEventInfo | null> {
   try {
     const targetDate = date || getNextShabbat();
     const dateStr = targetDate.toISOString().split('T')[0];
 
-    const response = await fetch(`https://www.sefaria.org/api/calendars?date=${dateStr}`);
-    if (!response.ok) return null;
+    // Create abort controller for timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
-    const data = await response.json();
-    const result: SefariaEventInfo = {};
+    try {
+      const response = await fetch(`https://www.sefaria.org/api/calendars?date=${dateStr}`, {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      if (!response.ok) return null;
 
-    // Get parasha
-    const parasha = data.calendar_items?.find(
-      (item: { title: { en: string } }) => item.title.en === "Parashat Hashavua"
-    );
-    if (parasha) {
-      result.parasha = {
-        nameHe: parasha.displayValue.he,
-        nameEn: parasha.displayValue.en,
-        ref: parasha.ref
-      };
+      const data = await response.json();
+      const result: SefariaEventInfo = {};
+
+      // Get parasha
+      const parasha = data.calendar_items?.find(
+        (item: { title: { en: string } }) => item.title.en === "Parashat Hashavua"
+      );
+      if (parasha) {
+        result.parasha = {
+          nameHe: parasha.displayValue.he,
+          nameEn: parasha.displayValue.en,
+          ref: parasha.ref
+        };
+      }
+
+      // Check for holidays (Yom Tov, Chag)
+      const holidayItem = data.calendar_items?.find(
+        (item: { title: { en: string } }) =>
+          item.title.en === "Holiday" ||
+          item.title.en.includes("Yom Tov") ||
+          item.title.en.includes("Chag")
+      );
+      if (holidayItem) {
+        result.holiday = {
+          nameHe: holidayItem.displayValue.he,
+          nameEn: holidayItem.displayValue.en
+        };
+      }
+
+      return result;
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      // Timeout or network error - return null gracefully
+      if (fetchError instanceof Error && fetchError.name === 'AbortError') {
+        console.log("Sefaria API request timed out");
+      } else {
+        console.error("Error fetching from Sefaria:", fetchError);
+      }
+      return null;
     }
-
-    // Check for holidays (Yom Tov, Chag)
-    const holidayItem = data.calendar_items?.find(
-      (item: { title: { en: string } }) =>
-        item.title.en === "Holiday" ||
-        item.title.en.includes("Yom Tov") ||
-        item.title.en.includes("Chag")
-    );
-    if (holidayItem) {
-      result.holiday = {
-        nameHe: holidayItem.displayValue.he,
-        nameEn: holidayItem.displayValue.en
-      };
-    }
-
-    return result;
   } catch (error) {
     console.error("Error fetching event info:", error);
     return null;
@@ -1115,9 +1168,132 @@ export async function getMembersWithPurchases(
   );
 }
 
+// Purchase item with mitzva details and payment status
+export interface PurchaseItem {
+  link_id: number;
+  mitzva_id: number;
+  mitzva_name: string;
+  bid_price: number;
+  payment_status: PaymentStatus;
+}
+
+// Member with detailed purchase items for table display
+export interface MemberWithPurchaseDetails extends Member {
+  purchases: PurchaseItem[];
+  total_price: number;
+}
+
+// Get all members with their detailed purchase items for a specific week
+export async function getMembersWithPurchaseDetails(
+  weekNumber: number,
+  year: number
+): Promise<MemberWithPurchaseDetails[]> {
+  const database = await getDb();
+
+  console.log(`[getMembersWithPurchaseDetails] Loading for week ${weekNumber}, year ${year}`);
+
+  // Get all links with member and mitzva details
+  const rows = await database.select<{
+    member_id: number;
+    member_code: string;
+    first_name: string;
+    last_name: string;
+    phone: string | null;
+    email: string | null;
+    notes: string | null;
+    notification_preferences: string | null;
+    created_at: string;
+    updated_at: string;
+    link_id: number;
+    mitzva_id: number;
+    mitzva_name: string;
+    bid_price: number;
+    payment_status: PaymentStatus;
+  }[]>(
+    `SELECT
+      m.id as member_id,
+      m.code as member_code,
+      m.first_name,
+      m.last_name,
+      m.phone,
+      m.email,
+      m.notes,
+      m.notification_preferences,
+      m.created_at,
+      m.updated_at,
+      l.id as link_id,
+      t.id as mitzva_id,
+      t.name as mitzva_name,
+      l.bid_price,
+      COALESCE(l.payment_status, 'unpaid') as payment_status
+     FROM members m
+     INNER JOIN links l ON m.id = l.member_id AND l.week_number = $1 AND l.year = $2
+     INNER JOIN tickets t ON l.ticket_id = t.id
+     ORDER BY m.last_name, m.first_name, l.linked_at`,
+    [weekNumber, year]
+  );
+
+  console.log(`[getMembersWithPurchaseDetails] Found ${rows.length} rows`);
+  console.log(`[getMembersWithPurchaseDetails] Rows:`, rows);
+
+  // Group by member
+  const memberMap = new Map<number, MemberWithPurchaseDetails>();
+
+  for (const row of rows) {
+    if (!memberMap.has(row.member_id)) {
+      memberMap.set(row.member_id, {
+        id: row.member_id,
+        code: row.member_code,
+        first_name: row.first_name,
+        last_name: row.last_name,
+        phone: row.phone,
+        email: row.email,
+        notes: row.notes,
+        notification_preferences: row.notification_preferences,
+        created_at: row.created_at,
+        updated_at: row.updated_at,
+        purchases: [],
+        total_price: 0
+      });
+    }
+
+    const member = memberMap.get(row.member_id)!;
+    member.purchases.push({
+      link_id: row.link_id,
+      mitzva_id: row.mitzva_id,
+      mitzva_name: row.mitzva_name,
+      bid_price: row.bid_price,
+      payment_status: row.payment_status
+    });
+    member.total_price += row.bid_price || 0;
+  }
+
+  return Array.from(memberMap.values());
+}
+
+// Update payment status for all links of a member in a week
+export async function updateMemberPaymentStatus(
+  memberId: number,
+  weekNumber: number,
+  year: number,
+  status: PaymentStatus
+): Promise<void> {
+  const database = await getDb();
+  await database.execute(
+    "UPDATE links SET payment_status = $1 WHERE member_id = $2 AND week_number = $3 AND year = $4",
+    [status, memberId, weekNumber, year]
+  );
+}
+
 // Mitzva with bid price for display
 export interface MitzvaWithBidPrice extends Mitzva {
   bid_price: number;
+}
+
+// Mitzva with link details for cart display
+export interface MitzvaWithLink extends Mitzva {
+  bid_price: number;
+  link_id: number;
 }
 
 // Get mitzvot with bid prices for a specific member in a week
@@ -1129,6 +1305,23 @@ export async function getMitzvotWithBidPriceForMember(
   const database = await getDb();
   return database.select<MitzvaWithBidPrice[]>(
     `SELECT t.*, l.bid_price
+     FROM tickets t
+     INNER JOIN links l ON t.id = l.ticket_id
+     WHERE l.member_id = $1 AND l.week_number = $2 AND l.year = $3
+     ORDER BY l.linked_at DESC`,
+    [memberId, weekNumber, year]
+  );
+}
+
+// Get mitzvot with link IDs for a specific member in a week (for cart management)
+export async function getMitzvotWithLinksForMember(
+  memberId: number,
+  weekNumber: number,
+  year: number
+): Promise<MitzvaWithLink[]> {
+  const database = await getDb();
+  return database.select<MitzvaWithLink[]>(
+    `SELECT t.*, l.bid_price, l.id as link_id
      FROM tickets t
      INNER JOIN links l ON t.id = l.ticket_id
      WHERE l.member_id = $1 AND l.week_number = $2 AND l.year = $3

@@ -1,4 +1,7 @@
-import { MemberWithPurchases } from "../../database";
+import { MemberWithPurchaseDetails, PurchaseItem, PaymentStatus } from "../../database";
+
+// Check if running on Android
+const isAndroidDevice = navigator.userAgent.toLowerCase().includes('android');
 
 // SVG Icons
 const FilterIcon = () => (
@@ -37,15 +40,9 @@ const EditIcon = () => (
   </svg>
 );
 
-const ReceiptIcon = () => (
+const PaymentIcon = () => (
   <svg viewBox="0 0 24 24">
-    <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
-  </svg>
-);
-
-const EmailIcon = () => (
-  <svg viewBox="0 0 24 24">
-    <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+    <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z"/>
   </svg>
 );
 
@@ -59,30 +56,31 @@ const getInitials = (firstName: string, lastName: string): string => {
   return `${firstName.charAt(0)}${lastName.charAt(0)}`;
 };
 
-// Display format for table row
-interface PurchaseRow {
-  id: number;
-  firstName: string;
-  lastName: string;
-  phone?: string;
-  email?: string;
-  mitzvotCount: number;
-  totalAmount: number;
-  paymentStatus: "paid" | "unpaid";
-}
+// Check if all purchases are paid
+const isAllPaid = (purchases: PurchaseItem[]): boolean => {
+  return purchases.length > 0 && purchases.every(p => p.payment_status === 'paid');
+};
 
 interface PurchasesTableProps {
-  members: MemberWithPurchases[];
+  members: MemberWithPurchaseDetails[];
   totalMembers: number;
   totalMitzvot: number;
   totalAmount: number;
   onScan: () => void;
   onFilter: () => void;
   onExport: () => void;
+  isExporting?: boolean;
   onEditPurchase: (memberId: number) => void;
-  onSendReminder: (memberId: number) => void;
+  onMarkAsPaid: (memberId: number) => void;
   searchQuery?: string;
 }
+
+// Loading spinner icon
+const LoadingIcon = () => (
+  <svg viewBox="0 0 24 24" className="export-loading-icon">
+    <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" fill="none" strokeDasharray="31.4 31.4" />
+  </svg>
+);
 
 export function PurchasesTable({
   members,
@@ -92,29 +90,48 @@ export function PurchasesTable({
   onScan,
   onFilter,
   onExport,
+  isExporting = false,
   onEditPurchase,
-  onSendReminder,
+  onMarkAsPaid,
   searchQuery = ""
 }: PurchasesTableProps) {
-  // Transform members to purchase rows
-  const rows: PurchaseRow[] = members.map(member => ({
-    id: member.id,
-    firstName: member.first_name,
-    lastName: member.last_name,
-    phone: member.phone || undefined,
-    email: member.email || undefined,
-    mitzvotCount: member.mitzvot_count,
-    totalAmount: member.total_price,
-    paymentStatus: member.total_price > 0 ? "unpaid" : "paid" as const, // TODO: Get actual status from database
-  }));
-
   // Filter by search query
-  const filteredRows = searchQuery
-    ? rows.filter(row =>
-        `${row.firstName} ${row.lastName}`.includes(searchQuery) ||
-        row.phone?.includes(searchQuery)
+  const filteredMembers = searchQuery
+    ? members.filter(member =>
+        `${member.first_name} ${member.last_name}`.includes(searchQuery) ||
+        member.phone?.includes(searchQuery)
       )
-    : rows;
+    : members;
+
+  // Build rows - each mitzva is a separate row, but member info only on first row
+  const rows: {
+    memberId: number;
+    firstName: string;
+    lastName: string;
+    phone?: string;
+    purchase: PurchaseItem;
+    isFirstRow: boolean;
+    rowSpan: number;
+    allPaid: boolean;
+    totalAmount: number;
+  }[] = [];
+
+  for (const member of filteredMembers) {
+    const allPaid = isAllPaid(member.purchases);
+    member.purchases.forEach((purchase, index) => {
+      rows.push({
+        memberId: member.id,
+        firstName: member.first_name,
+        lastName: member.last_name,
+        phone: member.phone || undefined,
+        purchase,
+        isFirstRow: index === 0,
+        rowSpan: member.purchases.length,
+        allPaid,
+        totalAmount: member.total_price
+      });
+    });
+  }
 
   return (
     <div className="table-container">
@@ -130,10 +147,16 @@ export function PurchasesTable({
             <FilterIcon />
             סינון
           </button>
-          <button className="table-filter-btn" onClick={onExport}>
-            <ExportIcon />
-            ייצוא
-          </button>
+          {!isAndroidDevice && (
+            <button
+              className={`table-filter-btn export-btn ${isExporting ? 'exporting' : ''}`}
+              onClick={onExport}
+              disabled={isExporting}
+            >
+              {isExporting ? <LoadingIcon /> : <ExportIcon />}
+              {isExporting ? 'מייצא...' : 'ייצוא'}
+            </button>
+          )}
           <button className="scan-btn" onClick={onScan}>
             <ScanIcon />
             התחל סריקה
@@ -141,81 +164,88 @@ export function PurchasesTable({
         </div>
       </div>
 
-      <table className="data-table">
-        <thead>
-          <tr>
-            <th>מתפלל</th>
-            <th>מצוות</th>
-            <th>סה"כ</th>
-            <th>סטטוס</th>
-            <th>פעולות</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredRows.map((row) => (
-            <tr key={row.id}>
-              <td>
-                <div className="table-member">
-                  <div className="table-member-avatar">
-                    {getInitials(row.firstName, row.lastName)}
-                  </div>
-                  <div className="table-member-info">
-                    <div className="table-member-name">{row.firstName} {row.lastName}</div>
-                    {row.phone && <div className="table-member-phone">{row.phone}</div>}
-                  </div>
-                </div>
-              </td>
-              <td>
-                <div className="table-mitzva-list">
-                  <span className="table-mitzva-count">{row.mitzvotCount} מצוות</span>
-                </div>
-              </td>
-              <td className="table-price">{formatPrice(row.totalAmount)}</td>
-              <td>
-                <span className={`table-status ${row.paymentStatus}`}>
-                  {row.paymentStatus === 'paid' ? <CheckIcon /> : <ClockIcon />}
-                  {row.paymentStatus === 'paid' ? 'שולם' : 'ממתין'}
-                </span>
-              </td>
-              <td>
-                <div className="table-actions">
-                  <button
-                    className="table-action-btn"
-                    onClick={() => onEditPurchase(row.id)}
-                    title="ערוך"
-                  >
-                    <EditIcon />
-                  </button>
-                  <button
-                    className="table-action-btn"
-                    onClick={() => onSendReminder(row.id)}
-                    title={row.paymentStatus === 'paid' ? "קבלה" : "תזכורת"}
-                  >
-                    {row.paymentStatus === 'paid' ? <ReceiptIcon /> : <EmailIcon />}
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))}
-          {filteredRows.length === 0 && (
+      <div className="data-table-wrapper">
+        <table className="data-table">
+          <thead>
             <tr>
-              <td colSpan={5} style={{ textAlign: 'center', padding: '40px', color: 'var(--gray-400)' }}>
-                {searchQuery ? 'לא נמצאו תוצאות' : 'אין רכישות השבוע'}
-              </td>
+              <th>מתפלל</th>
+              <th>מצווה</th>
+              <th>מחיר</th>
+              <th>סטטוס</th>
+              <th>פעולות</th>
             </tr>
-          )}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rows.map((row, index) => (
+              <tr
+                key={`${row.memberId}-${row.purchase.link_id}`}
+                className={row.isFirstRow ? 'member-first-row' : ''}
+              >
+                {row.isFirstRow && (
+                  <td rowSpan={row.rowSpan}>
+                    <div className="table-member">
+                      <div className="table-member-avatar">
+                        {getInitials(row.firstName, row.lastName)}
+                      </div>
+                      <div className="table-member-info">
+                        <div className="table-member-name">{row.firstName} {row.lastName}</div>
+                        {row.phone && <div className="table-member-phone">{row.phone}</div>}
+                      </div>
+                    </div>
+                  </td>
+                )}
+                <td>
+                  <span className="table-mitzva-name">{row.purchase.mitzva_name}</span>
+                </td>
+                <td className="table-price">{formatPrice(row.purchase.bid_price)}</td>
+                <td>
+                  <span className={`table-status ${row.purchase.payment_status}`}>
+                    {row.purchase.payment_status === 'paid' ? <CheckIcon /> : <ClockIcon />}
+                    {row.purchase.payment_status === 'paid' ? 'שולם' : 'ממתין'}
+                  </span>
+                </td>
+                {row.isFirstRow && (
+                  <td rowSpan={row.rowSpan}>
+                    <div className="table-actions">
+                      <button
+                        className="table-action-btn"
+                        onClick={() => onEditPurchase(row.memberId)}
+                        title="ערוך רכישות"
+                      >
+                        <EditIcon />
+                      </button>
+                      <button
+                        className={`table-action-btn ${row.allPaid ? 'paid' : ''}`}
+                        onClick={() => onMarkAsPaid(row.memberId)}
+                        title={row.allPaid ? "סמן כלא שולם" : "סמן כשולם"}
+                      >
+                        <PaymentIcon />
+                      </button>
+                    </div>
+                  </td>
+                )}
+              </tr>
+            ))}
+            {rows.length === 0 && (
+              <tr>
+                <td colSpan={5} style={{ textAlign: 'center', padding: '40px', color: 'var(--gray-400)' }}>
+                  {searchQuery ? 'לא נמצאו תוצאות' : 'אין רכישות השבוע'}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
 
-      {filteredRows.length > 0 && (
+      {filteredMembers.length > 0 && (
         <div className="table-pagination">
           <div className="pagination-info">
-            מציג 1-{Math.min(filteredRows.length, 10)} מתוך {filteredRows.length} מתפללים
+            מציג 1-{Math.min(filteredMembers.length, 10)} מתוך {filteredMembers.length} מתפללים
           </div>
           <div className="pagination-controls">
             <button className="pagination-btn">הקודם</button>
             <button className="pagination-btn active">1</button>
-            {filteredRows.length > 10 && <button className="pagination-btn">2</button>}
+            {filteredMembers.length > 10 && <button className="pagination-btn">2</button>}
             <button className="pagination-btn">הבא</button>
           </div>
         </div>

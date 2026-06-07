@@ -3,6 +3,34 @@
  */
 
 const API_BASE_URL = 'https://yanshouf.com/api';
+const DEFAULT_TIMEOUT_MS = 15000; // 15 second timeout for API calls
+
+/**
+ * Fetch with timeout - prevents hanging requests on mobile
+ */
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit = {},
+  timeoutMs: number = DEFAULT_TIMEOUT_MS
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+    return response;
+  } catch (error) {
+    clearTimeout(timeoutId);
+    if (error instanceof Error && error.name === 'AbortError') {
+      throw new Error('Request timed out');
+    }
+    throw error;
+  }
+}
 
 // Storage keys
 const AUTH_TOKEN_KEY = 'api_auth_token';
@@ -90,7 +118,7 @@ export interface SyncData {
  */
 export async function apiLogin(email: string, password: string): Promise<LoginResponse> {
   try {
-    const response = await fetch(`${API_BASE_URL}/auth.php?action=login`, {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/auth.php?action=login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -126,6 +154,38 @@ export async function apiLogin(email: string, password: string): Promise<LoginRe
 }
 
 /**
+ * Forgot password - send reset email
+ */
+export async function apiForgotPassword(email: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/auth.php?action=forgot-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      return { success: true };
+    }
+
+    return {
+      success: false,
+      error: data.error || 'שגיאה בשליחת הסיסמה',
+    };
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    return {
+      success: false,
+      error: 'שגיאת תקשורת. בדוק את חיבור האינטרנט.',
+    };
+  }
+}
+
+/**
  * Logout - invalidate token
  */
 export async function apiLogout(): Promise<void> {
@@ -133,7 +193,7 @@ export async function apiLogout(): Promise<void> {
 
   if (token) {
     try {
-      await fetch(`${API_BASE_URL}/auth.php?action=logout`, {
+      await fetchWithTimeout(`${API_BASE_URL}/auth.php?action=logout`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -186,7 +246,7 @@ export async function apiGetCurrentUser(): Promise<ApiUser | null> {
   if (!token) return null;
 
   try {
-    const response = await fetch(`${API_BASE_URL}/auth.php?action=me`, {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/auth.php?action=me`, {
       headers: {
         'Authorization': `Bearer ${token}`,
       },
@@ -223,11 +283,11 @@ export async function apiDownloadData(): Promise<{ success: boolean; data?: Sync
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/sync.php`, {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/sync.php`, {
       headers: {
         'Authorization': `Bearer ${token}`,
       },
-    });
+    }, 30000); // 30 second timeout for sync operations
 
     const result = await response.json();
 
@@ -258,16 +318,17 @@ export async function apiUploadData(data: {
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/sync.php`, {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/sync.php`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(data),
-    });
+    }, 30000); // 30 second timeout for sync operations
 
     const result = await response.json();
+    console.log('[apiUploadData] Server response:', JSON.stringify(result.result));
 
     if (result.success) {
       return { success: true, result: result.result };
@@ -288,7 +349,7 @@ export async function apiRefreshToken(): Promise<boolean> {
   if (!token) return false;
 
   try {
-    const response = await fetch(`${API_BASE_URL}/auth.php?action=refresh`, {
+    const response = await fetchWithTimeout(`${API_BASE_URL}/auth.php?action=refresh`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -376,8 +437,21 @@ async function apiRequest<T>(
       options.body = JSON.stringify(body);
     }
 
-    const response = await fetch(`${API_BASE_URL}/${endpoint}`, options);
-    const result = await response.json();
+    const response = await fetchWithTimeout(`${API_BASE_URL}/${endpoint}`, options);
+
+    // Handle non-OK responses
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`API request error (${endpoint}): HTTP ${response.status}`, errorText);
+      return { success: false, error: `שגיאת שרת (${response.status})` };
+    }
+
+    const text = await response.text();
+    if (!text) {
+      return { success: false, error: 'תגובה ריקה מהשרת' };
+    }
+
+    const result = JSON.parse(text);
 
     if (result.success) {
       return { success: true, data: result };

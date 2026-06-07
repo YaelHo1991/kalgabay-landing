@@ -11,18 +11,15 @@ import {
   apiCreateTicket,
   apiUpdateTicket,
   apiDeleteTicket,
-  apiCreateLink,
-  apiDeleteLink,
   ApiMember,
   ApiTicket,
 } from '../services/apiService';
 import * as db from '../database';
 
 // This hook manages synchronization between local SQLite and YanShouf server API
-// Strategy: SERVER-FIRST (not offline-first)
-// - All writes go to server FIRST
-// - If server succeeds, update local cache
-// - If server fails, show error to user (no local-only mode)
+// Strategy: HYBRID - Server-first for members/tickets, Local-first for links
+// - Members/Tickets: Server first, then update local cache
+// - Links: Local first, then sync to server in background (more responsive UX)
 // - This prevents duplicates when multiple devices are connected
 
 export function useSync(userId?: string) {
@@ -184,13 +181,30 @@ export function useSync(userId?: string) {
     }
 
     // Import links - server returns member_id and ticket_id directly
-    // Since server returns IDs not codes, we need to find them differently
-    // After importing members/tickets above, we can try to match by position/order
-    // But this is complex - better to have the server return codes
-    // TODO: Update server API to return member_code and ticket_code in links
-    if ((data.links || []).length > 0) {
-      console.log('Link import skipped - server needs to return member_code and ticket_code');
+    // Since we import members/tickets with their original IDs from server,
+    // we can use member_id and ticket_id directly
+    // Use INSERT OR REPLACE to update existing links (e.g., when bid_price changes)
+    const bidPrices = data.links?.map(l => `id:${l.id}=>₪${l.bid_price}|${l.payment_status}`).join(', ');
+    console.log('[importCloudData] Links bid_prices|status:', bidPrices);
+    for (const link of data.links || []) {
+      await database.execute(
+        `INSERT OR REPLACE INTO links (id, member_id, ticket_id, week_number, year, bid_price, payment_status, reminder_sent_at, linked_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [
+          link.id,
+          link.member_id,
+          link.ticket_id,
+          link.week_number,
+          link.year,
+          link.bid_price || 0,
+          link.payment_status || 'unpaid',
+          link.reminder_sent_at,
+          link.linked_at
+        ]
+      );
     }
+
+    console.log(`Imported ${data.links?.length || 0} links from cloud`);
   }, [clearLocalData]);
 
   // Sync all data from cloud to local
@@ -333,7 +347,7 @@ async function uploadCurrentData() {
     console.log('Cloud sync skipped: user not logged in');
     return;
   }
-  console.log('Syncing data to cloud...');
+  console.log('[uploadCurrentData] Starting sync to cloud...');
 
   const database = await db.getDb();
 
@@ -365,7 +379,11 @@ async function uploadCurrentData() {
      INNER JOIN tickets t ON l.ticket_id = t.id`
   );
 
-  await apiUploadData({
+  const linkDetails = links.map(l => `${l.member_code}/${l.ticket_code}=>₪${l.bid_price}|${l.payment_status}`).join(', ');
+  console.log(`[uploadCurrentData] Uploading: ${members.length} members, ${tickets.length} tickets, ${links.length} links, ${weeks.length} weeks`);
+  console.log(`[uploadCurrentData] Link details being sent: ${linkDetails}`);
+
+  const result = await apiUploadData({
     members: members.map(m => ({
       code: m.code,
       first_name: m.first_name,
@@ -409,6 +427,12 @@ async function uploadCurrentData() {
       holiday_name_en: w.holiday_name_en
     }))
   });
+
+  if (result.success) {
+    console.log('[uploadCurrentData] Sync to cloud completed successfully');
+  } else {
+    console.error('[uploadCurrentData] Sync to cloud failed:', result.error);
+  }
 }
 
 // ============================================
@@ -657,7 +681,8 @@ export async function deleteMitzvaSync(id: number): Promise<void> {
   await database.execute("DELETE FROM tickets WHERE id = $1", [id]);
 }
 
-// Link functions - Server First
+// Link functions - Local First with background sync
+// Save locally first, then sync to server in background
 export async function linkTicketToMemberSync(
   memberId: number,
   ticketId: number,
@@ -665,71 +690,61 @@ export async function linkTicketToMemberSync(
   year: number,
   bidPrice?: number
 ): Promise<number> {
-  if (!apiIsLoggedIn()) {
-    throw new Error('לא מחובר - יש להתחבר כדי לשייך מצוות');
+  // 1. Save locally first (always works)
+  const linkId = await db.linkTicketToMember(memberId, ticketId, weekNumber, year, bidPrice);
+
+  // 2. Sync to server in background (non-blocking)
+  if (apiIsLoggedIn()) {
+    syncToCloudSafe(uploadCurrentData);
   }
 
-  // 1. Create link on server first
-  // Note: Server uses date format instead of week_number/year
-  // For now, use current date - TODO: Convert week_number/year to date
-  const today = new Date().toISOString().split('T')[0];
-  const result = await apiCreateLink({
-    member_id: memberId,
-    ticket_id: ticketId,
-    date: today,
-    price_paid: bidPrice || 0,
-    notes: `Week ${weekNumber}/${year}`,
-  });
-
-  if (!result.success || !result.link) {
-    throw new Error(result.error || 'שגיאה ביצירת שיוך');
-  }
-
-  // 2. Server succeeded - now update local cache
-  const database = await db.getDb();
-  const now = new Date().toISOString();
-
-  await database.execute(
-    `INSERT INTO links (id, member_id, ticket_id, week_number, year, bid_price, linked_at, payment_status)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, 'unpaid')`,
-    [result.link.id, memberId, ticketId, weekNumber, year, bidPrice || 0, now]
-  );
-
-  return result.link.id;
+  return linkId;
 }
 
 export async function unlinkTicketSync(linkId: number): Promise<void> {
-  if (!apiIsLoggedIn()) {
-    throw new Error('לא מחובר - יש להתחבר כדי לבטל שיוך');
+  // 1. Delete locally first
+  await db.unlinkTicket(linkId);
+
+  // 2. Sync to server in background (non-blocking)
+  if (apiIsLoggedIn()) {
+    syncToCloudSafe(uploadCurrentData);
   }
-
-  // 1. Delete on server first
-  const result = await apiDeleteLink(linkId);
-
-  if (!result.success) {
-    throw new Error(result.error || 'שגיאה בביטול שיוך');
-  }
-
-  // 2. Server succeeded - now delete from local cache
-  const database = await db.getDb();
-  await database.execute("DELETE FROM links WHERE id = $1", [linkId]);
 }
 
 export async function updateLinkBidPriceSync(linkId: number, bidPrice: number): Promise<void> {
-  // For now, update locally only - TODO: Implement server-side link update
-  // The server API has apiUpdateLink but we need to fetch current link data first
-  await db.updateLinkBidPrice(linkId, bidPrice);
+  console.log(`[updateLinkBidPriceSync] Updating link ${linkId} with price ${bidPrice}`);
 
-  // Background sync (non-blocking)
-  syncToCloudSafe(uploadCurrentData);
+  // Update locally first
+  await db.updateLinkBidPrice(linkId, bidPrice);
+  console.log(`[updateLinkBidPriceSync] Local DB updated`);
+
+  // Sync to cloud (blocking to ensure data is uploaded before any refresh)
+  if (apiIsLoggedIn()) {
+    try {
+      await uploadCurrentData();
+      console.log(`[updateLinkBidPriceSync] Cloud sync completed`);
+    } catch (error) {
+      console.error('[updateLinkBidPriceSync] Cloud sync failed:', error);
+    }
+  }
 }
 
 export async function updateLinkPaymentStatusSync(linkId: number, status: db.PaymentStatus): Promise<void> {
-  // For now, update locally only - TODO: Implement server-side link update
-  await db.updateLinkPaymentStatus(linkId, status);
+  console.log(`[updateLinkPaymentStatusSync] Updating link ${linkId} with status ${status}`);
 
-  // Background sync (non-blocking)
-  syncToCloudSafe(uploadCurrentData);
+  // Update locally first
+  await db.updateLinkPaymentStatus(linkId, status);
+  console.log(`[updateLinkPaymentStatusSync] Local DB updated`);
+
+  // Sync to cloud (blocking to ensure data is uploaded before any refresh)
+  if (apiIsLoggedIn()) {
+    try {
+      await uploadCurrentData();
+      console.log(`[updateLinkPaymentStatusSync] Cloud sync completed`);
+    } catch (error) {
+      console.error('[updateLinkPaymentStatusSync] Cloud sync failed:', error);
+    }
+  }
 }
 
 export async function updateLinkMemberSync(linkId: number, newMemberId: number): Promise<void> {
@@ -738,4 +753,27 @@ export async function updateLinkMemberSync(linkId: number, newMemberId: number):
 
   // Background sync (non-blocking)
   syncToCloudSafe(uploadCurrentData);
+}
+
+export async function updateMemberPaymentStatusSync(
+  memberId: number,
+  weekNumber: number,
+  year: number,
+  status: db.PaymentStatus
+): Promise<void> {
+  console.log(`[updateMemberPaymentStatusSync] Updating member ${memberId} links for week ${weekNumber}/${year} with status ${status}`);
+
+  // Update locally first
+  await db.updateMemberPaymentStatus(memberId, weekNumber, year, status);
+  console.log(`[updateMemberPaymentStatusSync] Local DB updated`);
+
+  // Sync to cloud (blocking to ensure data is uploaded before any refresh)
+  if (apiIsLoggedIn()) {
+    try {
+      await uploadCurrentData();
+      console.log(`[updateMemberPaymentStatusSync] Cloud sync completed`);
+    } catch (error) {
+      console.error('[updateMemberPaymentStatusSync] Cloud sync failed:', error);
+    }
+  }
 }

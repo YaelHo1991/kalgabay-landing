@@ -4,11 +4,14 @@
  * Priority:
  * 1. Gmail API (if connected) - 500 emails/day per user, free
  * 2. Resend API (fallback) - 100 emails/day shared, requires API key
+ *
+ * NOTE: On Android, we use Tauri's Rust backend for Gmail API calls
+ * to avoid CORS/WebView issues with direct fetch.
  */
 
+import { invoke } from '@tauri-apps/api/core';
 import { getSetting, setSetting } from '../database';
-import { isGmailConnected, getGmailAccessToken, getGmailEmail } from './gmailService';
-import { apiGetEmailTemplate } from './apiService';
+import { isGmailConnected, getGmailAccessToken, getGmailEmail, getGmailUserName } from './gmailService';
 
 // Settings keys for Resend fallback
 const RESEND_API_KEY_SETTING = 'resend_api_key';
@@ -120,12 +123,14 @@ function createRawEmail(to: string, from: string, subject: string, htmlBody: str
 }
 
 /**
- * Send email via Gmail API
+ * Send email via Gmail API using Rust backend
+ * This is more reliable on Android than direct fetch due to CORS/WebView issues
  */
 async function sendViaGmail(params: SendEmailParams): Promise<SendEmailResult> {
   // Get access token (will refresh if needed)
   const accessToken = await getGmailAccessToken();
   const senderEmail = getGmailEmail();
+  const senderName = getGmailUserName() || senderEmail;
 
   if (!accessToken || !senderEmail) {
     return {
@@ -135,38 +140,33 @@ async function sendViaGmail(params: SendEmailParams): Promise<SendEmailResult> {
     };
   }
 
-  const rawEmail = createRawEmail(
-    params.to,
-    senderEmail,
-    params.subject,
-    params.html || params.text || '',
-    params.text || ''
-  );
-
   try {
-    const response = await fetch(GMAIL_API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ raw: rawEmail })
+    // Use Rust backend for Gmail API call - more reliable on Android
+    console.log('Sending email via Rust backend...');
+    console.log('To:', params.to);
+    console.log('Subject:', params.subject);
+
+    await invoke('send_email_gmail', {
+      accessToken,
+      toEmail: params.to,
+      toName: params.to.split('@')[0], // Use email prefix as name if not provided
+      subject: params.subject,
+      body: params.html || params.text || '',
+      fromEmail: senderEmail,
+      fromName: senderName
     });
 
-    if (response.ok) {
-      const data = await response.json();
-      return {
-        success: true,
-        messageId: data.id,
-        method: 'gmail'
-      };
-    }
+    console.log('Email sent successfully via Rust backend');
+    return {
+      success: true,
+      method: 'gmail'
+    };
+  } catch (error) {
+    console.error('Gmail API error (Rust):', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
 
     // Handle specific Gmail errors
-    const errorData = await response.json().catch(() => ({}));
-    const errorMessage = errorData.error?.message || 'שגיאה בשליחת המייל';
-
-    if (response.status === 401) {
+    if (errorMessage.includes('401') || errorMessage.includes('unauthorized') || errorMessage.includes('invalid_grant')) {
       return {
         success: false,
         error: 'פג תוקף ההרשאה. אנא התחבר מחדש ל-Gmail.',
@@ -176,14 +176,7 @@ async function sendViaGmail(params: SendEmailParams): Promise<SendEmailResult> {
 
     return {
       success: false,
-      error: errorMessage,
-      method: 'gmail'
-    };
-  } catch (error) {
-    console.error('Gmail API error:', error);
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : 'שגיאת רשת בשליחת המייל',
+      error: errorMessage || 'שגיאה בשליחת המייל',
       method: 'gmail'
     };
   }
@@ -310,65 +303,57 @@ export async function isEmailConfigured(): Promise<boolean> {
   return !!resendConfig?.apiKey;
 }
 
-// Default templates (fallback if server templates not available)
+// Default templates - using inline styles for Gmail compatibility
 const DEFAULT_TEMPLATES: Record<string, { subject: string; html: string; text: string }> = {
   payment_reminder: {
-    subject: 'תזכורת תשלום - {synagogue_name}',
+    subject: 'סיכום רכישה - {synagogue_name}',
     html: `<!DOCTYPE html>
 <html dir="rtl" lang="he">
 <head>
   <meta charset="UTF-8">
-  <style>
-    body { font-family: Arial, Helvetica, sans-serif; direction: rtl; text-align: right; background-color: #f5f5f5; margin: 0; padding: 20px; }
-    .container { max-width: 600px; margin: 0 auto; background-color: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    .header { text-align: center; border-bottom: 2px solid #1E5AA8; padding-bottom: 20px; margin-bottom: 20px; }
-    .header h1 { color: #1E5AA8; margin: 0; font-size: 24px; }
-    .content { white-space: pre-wrap; line-height: 1.8; color: #333; font-size: 16px; }
-    .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #888; font-size: 12px; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body>
-  <div class="container">
-    <div class="header"><h1>{synagogue_name}</h1></div>
-    <div class="content">{custom_message}</div>
-    <div class="footer"><p>הודעה זו נשלחה ממערכת KalGabay</p></div>
+<body dir="rtl" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; direction: rtl; text-align: right; background-color: #f8f4ef; margin: 0; padding: 20px;">
+  <div dir="rtl" style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden;">
+    <div style="text-align: center; background: linear-gradient(135deg, #4FA8D9 0%, #1E5AA8 100%); padding: 30px 20px;">
+      <h1 dir="rtl" style="color: white; margin: 0; font-size: 28px; font-weight: 600;">{synagogue_name}</h1>
+    </div>
+    <div dir="rtl" style="white-space: pre-wrap; line-height: 1.5; color: #333; font-size: 16px; padding: 30px; direction: rtl; text-align: right;">{custom_message}</div>
+    <div dir="rtl" style="padding: 20px 30px; border-top: 1px solid #eee; text-align: center; color: #888; font-size: 12px; background-color: #fafafa;">
+      <p style="margin: 0;">הודעה זו נשלחה ממערכת KalGabay</p>
+    </div>
   </div>
 </body>
 </html>`,
     text: '{custom_message}'
   },
   scan_confirmation: {
-    subject: 'אישור רכישה - {synagogue_name}',
+    subject: 'סיכום רכישה - {synagogue_name}',
     html: `<!DOCTYPE html>
 <html dir="rtl" lang="he">
 <head>
   <meta charset="UTF-8">
-  <style>
-    body { font-family: Arial, Helvetica, sans-serif; direction: rtl; text-align: right; background-color: #f5f5f5; margin: 0; padding: 20px; }
-    .container { max-width: 600px; margin: 0 auto; background-color: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    .header { text-align: center; border-bottom: 2px solid #1E5AA8; padding-bottom: 20px; margin-bottom: 20px; }
-    .header h1 { color: #1E5AA8; margin: 0; font-size: 24px; }
-    .content { line-height: 1.8; color: #333; font-size: 16px; }
-    .mitzvot-list { background: #f8f9fa; padding: 15px; border-radius: 8px; margin: 15px 0; }
-    .total { font-weight: bold; font-size: 18px; color: #1E5AA8; margin-top: 15px; }
-    .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #888; font-size: 12px; }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
-<body>
-  <div class="container">
-    <div class="header"><h1>{synagogue_name}</h1></div>
-    <div class="content">
-      <p>שלום {member_name},</p>
-      <p>תודה רבה על רכישת המצוות הבאות:</p>
-      <div class="mitzvot-list">{mitzvot_list}</div>
-      <p class="total">סה"כ: {total_amount} ₪</p>
-      <p>תזכו למצוות!</p>
+<body dir="rtl" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; direction: rtl; text-align: right; background-color: #f8f4ef; margin: 0; padding: 20px;">
+  <div dir="rtl" style="max-width: 600px; margin: 0 auto; background-color: white; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden;">
+    <div style="text-align: center; background: linear-gradient(135deg, #4FA8D9 0%, #1E5AA8 100%); padding: 30px 20px;">
+      <h1 dir="rtl" style="color: white; margin: 0; font-size: 28px; font-weight: 600;">{synagogue_name}</h1>
     </div>
-    <div class="footer"><p>הודעה זו נשלחה ממערכת KalGabay</p></div>
+    <div dir="rtl" style="line-height: 1.5; color: #333; font-size: 16px; padding: 30px; direction: rtl; text-align: right;">
+      <p dir="rtl" style="margin: 0 0 12px 0;">שלום {member_name},</p>
+      <p dir="rtl" style="margin: 0 0 12px 0;">תודה רבה על רכישת המצוות!</p>
+      <div dir="rtl" style="background: linear-gradient(135deg, #e8f4fc 0%, #d4ebf7 100%); padding: 20px; border-radius: 12px; margin: 20px 0; border-right: 4px solid #1E5AA8;">{mitzvot_list}</div>
+      <p dir="rtl" style="font-weight: 600; font-size: 20px; color: #1E5AA8; margin-top: 20px;">סה"כ: {total_amount} ₪</p>
+      <p dir="rtl" style="margin: 12px 0 0 0;">ושבת שלום!</p>
+    </div>
+    <div dir="rtl" style="padding: 20px 30px; border-top: 1px solid #eee; text-align: center; color: #888; font-size: 12px; background-color: #fafafa;">
+      <p style="margin: 0;">הודעה זו נשלחה ממערכת KalGabay</p>
+    </div>
   </div>
 </body>
 </html>`,
-    text: 'שלום {member_name},\n\nתודה רבה על רכישת המצוות:\n{mitzvot_list}\n\nסה"כ: {total_amount} ₪\n\nתזכו למצוות!\n\n{synagogue_name}'
+    text: 'שלום {member_name},\n\nתודה רבה על רכישת המצוות:\n{mitzvot_list}\n\nסה"כ: {total_amount} ₪\n\nושבת שלום!\n\n{synagogue_name}'
   }
 };
 
@@ -384,23 +369,11 @@ function processTemplate(template: string, variables: Record<string, string>): s
 }
 
 /**
- * Get email template from server with fallback to default
+ * Get email template - always use local defaults for consistent styling
+ * Server templates are currently not used to ensure RTL and design consistency
  */
-async function getTemplate(templateKey: string): Promise<{ subject: string; html: string; text: string }> {
-  try {
-    const result = await apiGetEmailTemplate(templateKey);
-    if (result.success && result.template) {
-      return {
-        subject: result.template.subject,
-        html: result.template.html_template,
-        text: result.template.text_template || ''
-      };
-    }
-  } catch (error) {
-    console.warn(`Failed to fetch template '${templateKey}' from server:`, error);
-  }
-
-  // Fallback to default template
+function getTemplate(templateKey: string): { subject: string; html: string; text: string } {
+  // Always use local templates for consistent styling
   return DEFAULT_TEMPLATES[templateKey] || DEFAULT_TEMPLATES.payment_reminder;
 }
 
@@ -411,9 +384,10 @@ export async function sendPaymentReminder(
   recipientEmail: string,
   recipientName: string,
   message: string,
-  synagogueName: string = 'בית הכנסת'
+  synagogueName: string = 'בית הכנסת',
+  customSubject?: string
 ): Promise<SendEmailResult> {
-  const template = await getTemplate('payment_reminder');
+  const template = getTemplate('payment_reminder');
 
   const variables = {
     member_name: recipientName || 'מתפלל יקר',
@@ -421,7 +395,10 @@ export async function sendPaymentReminder(
     custom_message: message.replace(/\n/g, '<br>')
   };
 
-  const subject = processTemplate(template.subject, variables);
+  // Use custom subject if provided, otherwise use template subject
+  const subject = customSubject
+    ? processTemplate(customSubject, variables)
+    : processTemplate(template.subject, variables);
   const htmlContent = processTemplate(template.html, variables);
   const textContent = processTemplate(template.text, { ...variables, custom_message: message });
 
@@ -443,7 +420,7 @@ export async function sendScanConfirmation(
   totalAmount: number,
   synagogueName: string = 'בית הכנסת'
 ): Promise<SendEmailResult> {
-  const template = await getTemplate('scan_confirmation');
+  const template = getTemplate('scan_confirmation');
 
   // Format mitzvot list as HTML and text
   const mitzvotHtml = mitzvotList.map(m => `• ${m}`).join('<br>');
@@ -491,4 +468,107 @@ export async function testEmailConfig(testEmail: string): Promise<SendEmailResul
     `,
     text: `בדיקת הגדרות מייל - אם קיבלת הודעה זו, הגדרות המייל שלך עובדות כראוי! (שיטת שליחה: ${method})`
   });
+}
+
+/**
+ * Sample email types for testing
+ */
+export type SampleEmailType = 'registration' | 'purchase_confirmation' | 'payment_reminder';
+
+/**
+ * Send a sample email for testing purposes
+ * This allows admins to preview how emails will look without triggering real events
+ */
+export async function sendSampleEmail(
+  type: SampleEmailType,
+  recipientEmail: string,
+  synagogueName: string = 'בית הכנסת לדוגמא'
+): Promise<SendEmailResult> {
+  const sampleData = {
+    memberName: 'ישראל ישראלי',
+    memberEmail: 'sample@example.com'
+  };
+
+  switch (type) {
+    case 'registration':
+      return sendEmail({
+        to: recipientEmail,
+        subject: `ברוכים הבאים ל-${synagogueName} - KalGabay`,
+        html: `<!DOCTYPE html>
+<html dir="rtl" lang="he">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { font-family: Arial, Helvetica, sans-serif; direction: rtl; text-align: right; background-color: #f5f5f5; margin: 0; padding: 20px; }
+    .container { max-width: 600px; margin: 0 auto; background-color: white; border-radius: 10px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .header { text-align: center; border-bottom: 2px solid #1E5AA8; padding-bottom: 20px; margin-bottom: 20px; }
+    .header h1 { color: #1E5AA8; margin: 0; font-size: 24px; }
+    .content { line-height: 1.8; color: #333; font-size: 16px; }
+    .highlight { background: #e3f2fd; padding: 15px; border-radius: 8px; margin: 15px 0; text-align: center; }
+    .code { font-size: 28px; font-weight: bold; color: #1E5AA8; letter-spacing: 3px; }
+    .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #888; font-size: 12px; }
+    .sample-badge { background: #ff9800; color: white; padding: 5px 15px; border-radius: 20px; font-size: 12px; display: inline-block; margin-bottom: 15px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <span class="sample-badge">📧 מייל לדוגמא</span>
+      <h1>${synagogueName}</h1>
+    </div>
+    <div class="content">
+      <p>שלום ${sampleData.memberName},</p>
+      <p>ברוכים הבאים למערכת KalGabay!</p>
+      <p>החשבון שלך נוצר בהצלחה. להלן קוד האימות שלך:</p>
+      <div class="highlight">
+        <span class="code">123456</span>
+      </div>
+      <p>קוד זה תקף ל-10 דקות.</p>
+      <p>אם לא ביקשת ליצור חשבון, ניתן להתעלם ממייל זה.</p>
+    </div>
+    <div class="footer">
+      <p>הודעה זו נשלחה ממערכת KalGabay</p>
+      <p style="color: #ff9800; font-weight: bold;">⚠️ זהו מייל לדוגמא בלבד - לא נוצר חשבון אמיתי</p>
+    </div>
+  </div>
+</body>
+</html>`,
+        text: `[מייל לדוגמא]\n\nשלום ${sampleData.memberName},\n\nברוכים הבאים למערכת KalGabay!\n\nקוד האימות שלך: 123456\n\n${synagogueName}`
+      });
+
+    case 'purchase_confirmation':
+      const sampleMitzvot = ['עליה לתורה - שלישי', 'הגבהה', 'פתיחת ההיכל'];
+      const sampleTotal = 360;
+      return sendScanConfirmation(
+        recipientEmail,
+        sampleData.memberName + ' (לדוגמא)',
+        sampleMitzvot,
+        sampleTotal,
+        synagogueName
+      );
+
+    case 'payment_reminder':
+      const sampleMessage = `שלום ${sampleData.memberName},
+
+זוהי תזכורת בנוגע לעליה לתורה - רביעי שרכשת השבת.
+
+סכום לתשלום: ₪180
+
+ניתן לשלם במזומן או באמצעות העברה בנקאית.
+
+בברכה,
+${synagogueName}`;
+      return sendPaymentReminder(
+        recipientEmail,
+        sampleData.memberName + ' (לדוגמא)',
+        sampleMessage,
+        synagogueName
+      );
+
+    default:
+      return {
+        success: false,
+        error: 'סוג מייל לא מוכר'
+      };
+  }
 }

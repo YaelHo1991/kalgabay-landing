@@ -51,13 +51,15 @@ interface NavTabsProps {
   onTabChange: (tab: TabId) => void;
   membersCount?: number;
   mitzvotCount?: number;
+  isAndroid?: boolean;
 }
 
 export function NavTabs({
   activeTab,
   onTabChange,
   membersCount,
-  mitzvotCount
+  mitzvotCount,
+  isAndroid = false
 }: NavTabsProps) {
   const getTabBadge = (tabId: TabId): number | undefined => {
     switch (tabId) {
@@ -70,10 +72,13 @@ export function NavTabs({
     }
   };
 
+  // Filter out print tab on Android (printing not supported)
+  const visibleTabs = isAndroid ? TABS.filter(tab => tab.id !== "print") : TABS;
+
   return (
     <div className="nav-tabs-container">
       <nav className="nav-tabs">
-        {TABS.map((tab) => {
+        {visibleTabs.map((tab) => {
           const Icon = tab.icon;
           const badge = getTabBadge(tab.id);
 

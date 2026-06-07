@@ -9,24 +9,6 @@ const LogoIcon = () => (
   </svg>
 );
 
-const ShabbatIcon = () => (
-  <svg viewBox="0 0 24 24">
-    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-  </svg>
-);
-
-const ChevronRightIcon = () => (
-  <svg viewBox="0 0 24 24">
-    <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/>
-  </svg>
-);
-
-const ChevronLeftIcon = () => (
-  <svg viewBox="0 0 24 24">
-    <path d="M15.41 16.59L10.83 12l4.58-4.59L14 6l-6 6 6 6 1.41-1.41z"/>
-  </svg>
-);
-
 // Logout icon
 const LogoutIcon = () => (
   <svg viewBox="0 0 24 24">
@@ -46,8 +28,6 @@ interface DashboardHeaderProps {
   userInitials: string;
   synagogueName?: string;
   selectedWeek: Week | null;
-  onPrevWeek: () => void;
-  onNextWeek: () => void;
   onOpenWeekSelector?: () => void;
   searchQuery?: string;
   onSearchChange?: (query: string) => void;
@@ -62,8 +42,6 @@ export function DashboardHeader({
   userInitials,
   synagogueName,
   selectedWeek,
-  onPrevWeek,
-  onNextWeek,
   onOpenWeekSelector,
   onLogout,
   gmailConnected,
@@ -108,34 +86,21 @@ export function DashboardHeader({
             <div className="logo-text">קלגבאי</div>
           </div>
 
-          {/* Shabbat Card with Parasha and Week Navigation */}
-          <div className="shabbat-card">
-            <div className="week-nav-btns">
-              <button className="week-nav-btn" onClick={onNextWeek} title="שבוע הבא">
-                <ChevronRightIcon />
-              </button>
-            </div>
-            <div className="shabbat-icon">
-              <ShabbatIcon />
-            </div>
-            <div
-              className={`shabbat-content ${onOpenWeekSelector ? 'clickable' : ''}`}
-              onClick={onOpenWeekSelector}
-              title={onOpenWeekSelector ? "לחץ לבחירת שבוע" : undefined}
-            >
+          {/* Shabbat Card with Parasha */}
+          <div
+            className={`shabbat-card ${onOpenWeekSelector ? 'clickable' : ''}`}
+            onClick={onOpenWeekSelector}
+            title={onOpenWeekSelector ? "לחץ לבחירת שבוע" : undefined}
+          >
+            {onOpenWeekSelector && (
+              <span className="shabbat-selector-hint">
+                <ChevronDownIcon />
+              </span>
+            )}
+            <div className="shabbat-text">
               <span className="shabbat-greeting">שבת שלום!</span>
               <span className="shabbat-parasha">{getParashaName()}</span>
               <span className="shabbat-date">{getHebrewDate()}</span>
-              {onOpenWeekSelector && (
-                <span className="shabbat-selector-hint">
-                  <ChevronDownIcon />
-                </span>
-              )}
-            </div>
-            <div className="week-nav-btns">
-              <button className="week-nav-btn" onClick={onPrevWeek} title="שבוע קודם">
-                <ChevronLeftIcon />
-              </button>
             </div>
           </div>
         </div>

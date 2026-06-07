@@ -207,7 +207,7 @@
   },
   "members": {
     "title": "מתפללים",
-    "addNew": "+ הוסף מתפלל חדש",
+    "addNew": "הוסף מתפלל חדש",
     "searchPlaceholder": "חיפוש לפי שם, טלפון או קוד...",
     "noResults": "לא נמצאו תוצאות",
     "noMembers": "אין מתפללים",
@@ -318,7 +318,7 @@
   },
   "mitzvot": {
     "title": "מצוות",
-    "addNew": "+ הוסף מצווה חדשה",
+    "addNew": "הוסף מצווה חדשה",
     "noMitzvot": "אין מצוות",
     "noResults": "לא נמצאו תוצאות",
     "tryOtherSearch": "נסה חיפוש אחר",

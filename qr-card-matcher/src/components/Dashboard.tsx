@@ -12,10 +12,10 @@ import {
   ensureCurrentWeekExists,
   getMitzvotForMemberInWeek,
   getMitzvotWithPurchasers,
-  getMembersWithPurchases,
+  getMembersWithPurchaseDetails,
   getMitzvotWithBidPriceForMember,
   MitzvaWithPurchaser,
-  MemberWithPurchases,
+  MemberWithPurchaseDetails,
   MitzvaWithBidPrice,
   updateLinkReminderSent,
   getAllMembers,
@@ -35,6 +35,7 @@ import {
   updateLinkBidPriceSync,
   updateLinkMemberSync,
   updateLinkPaymentStatusSync,
+  updateMemberPaymentStatusSync,
 } from "../hooks/useSync";
 import { QRGenerator, generateQRDataUrl } from "./QRGenerator";
 import { generateCardPng } from "../utils/pdfGenerator";
@@ -55,6 +56,7 @@ import { MitzvotPage } from "./dashboard/MitzvotPage";
 import { ArchivePage } from "./dashboard/ArchivePage";
 import { PrintLabelsPage } from "./dashboard/PrintLabelsPage";
 import { ScanningModal, CartItem as ScanningCartItem } from "./dashboard/ScanningModal";
+import { ReminderPreviewModal } from "./dashboard/ReminderPreviewModal";
 import "./dashboard/DashboardDesktop.css";
 
 type ScanMode = "member" | "mitzva" | "mitzva-multi" | null;
@@ -156,7 +158,7 @@ export function Dashboard({
   type ViewMode = "mitzvot" | "members";
   const [viewMode, setViewMode] = useState<ViewMode>("mitzvot");
   const [mitzvotWithPurchasers, setMitzvotWithPurchasers] = useState<MitzvaWithPurchaser[]>([]);
-  const [membersWithPurchases, setMembersWithPurchases] = useState<MemberWithPurchases[]>([]);
+  const [membersWithPurchases, setMembersWithPurchases] = useState<MemberWithPurchaseDetails[]>([]);
   const [allMembersForView, setAllMembersForView] = useState<Member[]>([]); // All members for the members tab
   const [expandedMemberId, setExpandedMemberId] = useState<number | null>(null);
   const [memberMitzvot, setMemberMitzvot] = useState<MitzvaWithBidPrice[]>([]);
@@ -172,6 +174,27 @@ export function Dashboard({
 
   // Reminder modal state
   const [reminderMitzva, setReminderMitzva] = useState<MitzvaWithPurchaser | null>(null);
+
+  // Reminder Preview modal state (for bulk and single with preview)
+  const [showReminderPreviewModal, setShowReminderPreviewModal] = useState(false);
+  const [reminderPreviewMember, setReminderPreviewMember] = useState<{
+    id: number;
+    firstName: string;
+    lastName: string;
+    amount: number;
+    email?: string;
+    phone?: string;
+    mitzvotNames?: string[];
+  } | null>(null);
+  const [reminderPreviewMembers, setReminderPreviewMembers] = useState<{
+    id: number;
+    firstName: string;
+    lastName: string;
+    amount: number;
+    email?: string;
+    phone?: string;
+    mitzvotNames?: string[];
+  }[]>([]);
 
   // Edit mode state - for managing members/mitzvot directly from dashboard
   const [isEditMode, setIsEditMode] = useState(false);
@@ -190,7 +213,7 @@ export function Dashboard({
   const [editModeMember, setEditModeMember] = useState<Member | null>(null);
   const [editModeMitzva, setEditModeMitzva] = useState<Mitzva | null>(null);
   const [showMemberDetailsModal, setShowMemberDetailsModal] = useState(false);
-  const [detailsMember, setDetailsMember] = useState<MemberWithPurchases | null>(null);
+  const [detailsMember, setDetailsMember] = useState<MemberWithPurchaseDetails | null>(null);
 
   // Print position modal for member stickers
   const [showPrintPositionModal, setShowPrintPositionModal] = useState(false);
@@ -200,6 +223,9 @@ export function Dashboard({
   // TEST MODAL - for debugging grid issue
   const [showTestModal, setShowTestModal] = useState(false);
   const [testTargetMember, setTestTargetMember] = useState<Member | null>(null);
+
+  // Export state
+  const [isExporting, setIsExporting] = useState(false);
   const [testSelectedPosition, setTestSelectedPosition] = useState<number>(1);
 
   // Unified print modal state
@@ -209,6 +235,7 @@ export function Dashboard({
 
   // Desktop Scanning Modal state
   const [showScanningModal, setShowScanningModal] = useState(false);
+  const [editingMember, setEditingMember] = useState<Member | null>(null);
 
   // Member form fields
   const [memberFirstName, setMemberFirstName] = useState("");
@@ -327,7 +354,7 @@ export function Dashboard({
         const mitzvotData = await getMitzvotWithPurchasers(selectedWeek.week_number, selectedWeek.year);
         setMitzvotWithPurchasers(mitzvotData);
 
-        const membersData = await getMembersWithPurchases(selectedWeek.week_number, selectedWeek.year);
+        const membersData = await getMembersWithPurchaseDetails(selectedWeek.week_number, selectedWeek.year);
         setMembersWithPurchases(membersData);
       }
     } catch (error) {
@@ -357,29 +384,106 @@ export function Dashboard({
   };
 
   const getPaidAmount = () => {
-    // Calculate based on payment status
-    return mitzvotWithPurchasers
-      .filter(m => m.payment_status === 'paid')
-      .reduce((sum, m) => sum + (m.bid_price || 0), 0);
+    return membersWithPurchases.reduce((sum, m) => {
+      const paidPurchases = m.purchases.filter(p => p.payment_status === 'paid');
+      return sum + paidPurchases.reduce((psum, p) => psum + (p.bid_price || 0), 0);
+    }, 0);
+  };
+
+  const getTotalMitzvot = () => {
+    return membersWithPurchases.reduce((sum, m) => sum + m.purchases.length, 0);
   };
 
   const getUnpaidMembers = () => {
-    // Get members with unpaid purchases
-    const unpaidMitzvot = mitzvotWithPurchasers.filter(m => m.payment_status !== 'paid' && m.purchaser_id);
-    const memberIds = [...new Set(unpaidMitzvot.map(m => m.purchaser_id))];
+    return membersWithPurchases
+      .filter(m => m.purchases.some(p => p.payment_status === 'unpaid'))
+      .map(m => {
+        const unpaidPurchases = m.purchases.filter(p => p.payment_status === 'unpaid');
+        const unpaidAmount = unpaidPurchases.reduce((sum, p) => sum + (p.bid_price || 0), 0);
+        const mitzvotNames = unpaidPurchases.map(p => p.mitzva_name).filter(Boolean) as string[];
+        return {
+          id: m.id,
+          firstName: m.first_name,
+          lastName: m.last_name,
+          amount: unpaidAmount,
+          email: m.email || undefined,
+          phone: m.phone || undefined,
+          mitzvotNames,
+        };
+      });
+  };
 
-    return memberIds.map(id => {
-      const memberMitzvot = unpaidMitzvot.filter(m => m.purchaser_id === id);
-      const firstMitzva = memberMitzvot[0];
-      return {
-        id: id!,
-        firstName: firstMitzva.purchaser_name?.split(' ')[0] || '',
-        lastName: firstMitzva.purchaser_name?.split(' ').slice(1).join(' ') || '',
-        amount: memberMitzvot.reduce((sum, m) => sum + (m.bid_price || 0), 0),
-        email: firstMitzva.purchaser_email || undefined,
-        phone: firstMitzva.purchaser_phone || undefined,
-      };
-    });
+  // Handle marking member as paid/unpaid
+  const handleMarkAsPaid = async (memberId: number) => {
+    if (!selectedWeek) return;
+
+    const member = membersWithPurchases.find(m => m.id === memberId);
+    if (!member) return;
+
+    // Toggle status - if all paid, mark as unpaid, otherwise mark as paid
+    const allPaid = member.purchases.every(p => p.payment_status === 'paid');
+    const newStatus = allPaid ? 'unpaid' : 'paid';
+
+    try {
+      await updateMemberPaymentStatusSync(memberId, selectedWeek.week_number, selectedWeek.year, newStatus);
+
+      // Reload data
+      const members = await getMembersWithPurchaseDetails(selectedWeek.week_number, selectedWeek.year);
+      setMembersWithPurchases(members);
+    } catch (error) {
+      console.error("Error updating payment status:", error);
+    }
+  };
+
+  // Export weekly report to CSV
+  const handleExport = async () => {
+    if (!selectedWeek || membersWithPurchases.length === 0) return;
+
+    setIsExporting(true);
+
+    try {
+      // Small delay for animation feedback
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Build CSV content
+      const headers = ['שם מתפלל', 'טלפון', 'מצווה', 'מחיר', 'סטטוס תשלום'];
+      const rows: string[][] = [];
+
+      for (const member of membersWithPurchases) {
+        for (const purchase of member.purchases) {
+          rows.push([
+            `${member.first_name} ${member.last_name}`,
+            member.phone || '',
+            purchase.mitzva_name,
+            purchase.bid_price.toString(),
+            purchase.payment_status === 'paid' ? 'שולם' : 'ממתין'
+          ]);
+        }
+      }
+
+      // Add BOM for Hebrew support in Excel
+      const BOM = '\uFEFF';
+      const csvContent = BOM + [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+      ].join('\n');
+
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const fileName = `דוח_רכישות_${selectedWeek.parasha_name_he || `שבוע_${selectedWeek.week_number}`}_${selectedWeek.year}.csv`;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting report:', error);
+    } finally {
+      setIsExporting(false);
+    }
   };
 
   const loadMemberMitzvot = async (memberId: number) => {
@@ -590,44 +694,50 @@ export function Dashboard({
   }, [isEditMode]);
 
   // Handle save from ScanningModal
+  // Note: Items are now saved to database immediately when added to cart
+  // This function just refreshes the UI and optionally sends a message
   const handleScanningModalSave = async (
     memberId: number,
     items: ScanningCartItem[],
-    sendMessage: boolean
+    sendMessage: boolean,
+    messageContent?: string,
+    customSubject?: string
   ) => {
     if (!selectedWeek) return;
 
     try {
-      // Link each mitzva to the member with the price
-      for (const item of items) {
-        await linkTicketToMemberSync(memberId, item.mitzva.id, selectedWeek.week_number, selectedWeek.year, item.price);
-      }
-
-      // Refresh the data
-      await loadStats();
-      const updatedMitzvot = await getMitzvotWithPurchasers(selectedWeek.week_number, selectedWeek.year);
-      setMitzvotWithPurchasers(updatedMitzvot);
-      const updatedMembers = await getMembersWithPurchases(selectedWeek.week_number, selectedWeek.year);
-      setMembersWithPurchases(updatedMembers);
-
-      // Send message if requested
+      // Send message first if requested (this is the user's main action)
       if (sendMessage) {
         const member = allMembers.find(m => m.id === memberId);
         if (member?.email) {
-          const mitzvotList = items.map(i => `• ${i.mitzva.name} - ₪${i.price}`).join("\n");
-          const total = items.reduce((sum, i) => sum + i.price, 0);
-          const message = `שלום ${member.first_name},\n\nתודה רבה על רכישת המצוות!\n\n${mitzvotList}\n\nסה"כ: ₪${total}\n\nשבת שלום!`;
+          const message = messageContent || (() => {
+            const mitzvotList = items.map(i => `• ${i.mitzva.name} - ₪${i.price}`).join("\n");
+            const total = items.reduce((sum, i) => sum + i.price, 0);
+            return `שלום ${member.first_name},\n\nתודה רבה על רכישת המצוות!\n\n${mitzvotList}\n\nסה"כ: ₪${total}\n\nשבת שלום!`;
+          })();
 
           await sendEmailReminder(
             member.email,
             `${member.first_name} ${member.last_name}`,
             message,
-            user?.synagogue_name || 'בית הכנסת'
+            user?.synagogue_name || 'בית הכנסת',
+            customSubject
           );
         }
+        // Don't show message here - the modal will show its own success message
+        // and stay open for the next scan
+      } else {
+        // Only show success message when not sending email (modal will close)
+        showMessage("success", t("dashboard.messages.purchaseSaved"));
       }
 
-      showMessage("success", t("dashboard.messages.purchaseSaved"));
+      // Refresh data in background (don't block UI)
+      // Items are already saved to database, this just updates the display
+      Promise.all([
+        loadStats(),
+        getMitzvotWithPurchasers(selectedWeek.week_number, selectedWeek.year).then(setMitzvotWithPurchasers),
+        getMembersWithPurchaseDetails(selectedWeek.week_number, selectedWeek.year).then(setMembersWithPurchases)
+      ]).catch(err => console.error("Error refreshing data:", err));
     } catch (error) {
       console.error("Error saving purchase:", error);
       throw error;
@@ -1667,8 +1777,8 @@ export function Dashboard({
             transform: "translateX(-50%)",
             padding: "15px 30px",
             borderRadius: "8px",
-            background: message.type === "success" ? "#d4edda" : "#f8d7da",
-            color: message.type === "success" ? "#155724" : "#721c24",
+            background: message.type === "success" ? "#FEF9C3" : "#f8d7da",
+            color: message.type === "success" ? "#A16207" : "#721c24",
             zIndex: 1000,
             boxShadow: "0 4px 15px rgba(0,0,0,0.2)",
           }}
@@ -1684,11 +1794,7 @@ export function Dashboard({
           userInitials={getUserInitials()}
           synagogueName={user?.synagogue_name}
           selectedWeek={selectedWeek}
-          onPrevWeek={() => {/* TODO: Implement week navigation */}}
-          onNextWeek={() => {/* TODO: Implement week navigation */}}
           onOpenWeekSelector={onOpenWeekSelector}
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
           onLogout={onLogout}
           gmailConnected={gmailConnected}
           gmailEmail={gmailEmail}
@@ -1883,6 +1989,7 @@ export function Dashboard({
           onTabChange={setActiveTab}
           membersCount={stats?.totalMembers}
           mitzvotCount={stats?.totalMitzvot}
+          isAndroid={isAndroid()}
         />
       )}
 
@@ -1894,22 +2001,22 @@ export function Dashboard({
             <PurchasesTable
               members={membersWithPurchases}
               totalMembers={membersWithPurchases.length}
-              totalMitzvot={stats?.totalMitzvot || 0}
+              totalMitzvot={getTotalMitzvot()}
               totalAmount={getTotalAmount()}
               onScan={() => setShowScanningModal(true)}
               onFilter={() => {/* TODO */}}
-              onExport={() => {/* TODO */}}
+              onExport={handleExport}
+              isExporting={isExporting}
               onEditPurchase={(memberId) => {
+                // Find the member from membersWithPurchases (already loaded)
+                // MemberWithPurchaseDetails extends Member so it has all required fields
                 const member = membersWithPurchases.find(m => m.id === memberId);
                 if (member) {
-                  setDetailsMember(member);
-                  setShowMemberDetailsModal(true);
+                  setEditingMember(member);
+                  setShowScanningModal(true);
                 }
               }}
-              onSendReminder={(memberId) => {
-                const mitzva = mitzvotWithPurchasers.find(m => m.purchaser_id === memberId);
-                if (mitzva) openReminderModal(mitzva);
-              }}
+              onMarkAsPaid={handleMarkAsPaid}
               searchQuery={searchQuery}
             />
 
@@ -1923,12 +2030,20 @@ export function Dashboard({
                 members={getUnpaidMembers()}
                 totalUnpaid={getTotalAmount() - getPaidAmount()}
                 onSendReminder={(memberId) => {
-                  const mitzva = mitzvotWithPurchasers.find(m => m.purchaser_id === memberId);
-                  if (mitzva) openReminderModal(mitzva);
+                  const unpaidMember = getUnpaidMembers().find(m => m.id === memberId);
+                  if (unpaidMember) {
+                    setReminderPreviewMember(unpaidMember);
+                    setReminderPreviewMembers([]);
+                    setShowReminderPreviewModal(true);
+                  }
                 }}
                 onSendAllReminders={() => {
-                  const firstUnpaid = mitzvotWithPurchasers.find(m => m.payment_status !== 'paid' && m.purchaser_id);
-                  if (firstUnpaid) openReminderModal(firstUnpaid);
+                  const allUnpaid = getUnpaidMembers();
+                  if (allUnpaid.length > 0) {
+                    setReminderPreviewMember(null);
+                    setReminderPreviewMembers(allUnpaid);
+                    setShowReminderPreviewModal(true);
+                  }
                 }}
               />
             </div>
@@ -3360,7 +3475,7 @@ export function Dashboard({
                             <button
                               className="btn btn-secondary"
                               onClick={() => {
-                                setDetailsMember({ ...member, mitzvot_count: 0, total_price: 0 });
+                                setDetailsMember({ ...member, purchases: [], total_price: 0 });
                                 setShowMemberDetailsModal(true);
                               }}
                               style={{ padding: "6px 10px", fontSize: "0.8rem" }}
@@ -3514,7 +3629,7 @@ export function Dashboard({
                                 color: "#1E5AA8",
                                 fontSize: "0.85rem"
                               }}>
-                                {purchaseInfo.mitzvot_count} {t("nav.mitzvot")}
+                                {purchaseInfo.purchases.length} {t("nav.mitzvot")}
                               </span>
                             </div>
                           ) : (
@@ -4856,15 +4971,51 @@ export function Dashboard({
       )}
       {/* End Mobile Content */}
 
+      {/* Reminder Preview Modal - for bulk and single with preview */}
+      {showReminderPreviewModal && (
+        <ReminderPreviewModal
+          isOpen={showReminderPreviewModal}
+          onClose={() => {
+            setShowReminderPreviewModal(false);
+            setReminderPreviewMember(null);
+            setReminderPreviewMembers([]);
+          }}
+          member={reminderPreviewMember || undefined}
+          members={reminderPreviewMembers.length > 0 ? reminderPreviewMembers : undefined}
+          onSent={(successCount, failCount) => {
+            if (successCount > 0) {
+              showMessage("success", `נשלחו ${successCount} תזכורות בהצלחה${failCount > 0 ? `, ${failCount} נכשלו` : ''}`);
+            } else if (failCount > 0) {
+              showMessage("error", `שליחת ${failCount} תזכורות נכשלה`);
+            }
+          }}
+        />
+      )}
+
       {/* Desktop Scanning Modal */}
-      {showScanningModal && (
+      {showScanningModal && selectedWeek && (
         <ScanningModal
           isOpen={showScanningModal}
-          onClose={() => setShowScanningModal(false)}
+          onClose={() => {
+            setShowScanningModal(false);
+            setEditingMember(null);
+          }}
           members={allMembers}
-          mitzvot={allMitzvotForEdit}
+          mitzvot={mitzvotWithPurchasers}
           onSave={handleScanningModalSave}
+          onPriceChange={async () => {
+            // Refresh the purchases table when price changes
+            if (selectedWeek) {
+              const updatedMembers = await getMembersWithPurchaseDetails(selectedWeek.week_number, selectedWeek.year);
+              setMembersWithPurchases(updatedMembers);
+            }
+          }}
+          initialMember={editingMember}
           synagogueName={user?.synagogue_name}
+          weekNumber={selectedWeek.week_number}
+          year={selectedWeek.year}
+          parashaName={selectedWeek.parasha_name_he || selectedWeek.holiday_name_he || undefined}
+          shabbatDate={selectedWeek.shabbat_date || undefined}
         />
       )}
 

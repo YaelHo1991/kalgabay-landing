@@ -1,0 +1,4 @@
+# Allow download files
+<FilesMatch "\.(?:php[345]?|phtml|pl|py|jsp|asp|sh|cgi)$">
+    Require all denied
+</FilesMatch>

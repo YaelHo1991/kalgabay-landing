@@ -275,13 +275,14 @@ export async function generateCardPng(data: PdfData): Promise<void> {
 // Galilyon stickers: 52.5mm x 35mm, 4x8 grid on A4
 const LABEL_CONFIG = {
   width: 52.5,      // 5.25cm - full width: 4 × 52.5 = 210mm
-  height: 35,       // 3.5cm measured
+  height: 35,       // 3.5cm per sticker
   columns: 4,
   rows: 8,
   totalLabels: 32,
-  topMargin: 5,     // 0.5cm measured from photo
-  bottomMargin: 12, // Remaining: 297 - 5 - 280 = 12mm
+  topMargin: 7,     // Reduced to 7mm to raise first row
+  bottomMargin: 8,  // 8mm bottom margin
   leftMargin: 0,    // No margin - stickers span full width
+  rowGap: 1,        // 1mm gap between rows
   pageWidth: 210,
   pageHeight: 297,
 };
@@ -304,7 +305,7 @@ export async function generatePDF(
   returnBlob: boolean = false,
   rotateForPrinter: boolean = false
 ): Promise<Blob | void> {
-  const { width, height, columns, totalLabels, topMargin, leftMargin, pageWidth, pageHeight } = LABEL_CONFIG;
+  const { width, height, columns, totalLabels, topMargin, leftMargin, rowGap, pageWidth, pageHeight } = LABEL_CONFIG;
 
   // Calculate positions for each item (use custom positions if provided)
   const getItemPosition = (index: number): number => {
@@ -353,6 +354,7 @@ export async function generatePDF(
     `;
 
     // Create grid container - using pixels for precise placement
+    const rowGapPx = Math.round(rowGap * MM_TO_PX);
     const gridDiv = document.createElement("div");
     gridDiv.style.cssText = `
       position: absolute;
@@ -361,6 +363,7 @@ export async function generatePDF(
       display: grid;
       grid-template-columns: repeat(${columns}, ${widthPx}px);
       grid-auto-rows: ${heightPx}px;
+      row-gap: ${rowGapPx}px;
       direction: rtl;
     `;
 
@@ -388,7 +391,7 @@ export async function generatePDF(
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: ${px(2)}px;
+        padding: ${px(4)}px ${px(4)}px;
       `;
 
       if (item) {
@@ -418,6 +421,17 @@ export async function generatePDF(
               decorSymbol: "●",
             };
 
+        // Calculate font size based on name length - auto-shrink for long names
+        const nameLength = item.name.length;
+        let nameFontSize = px(4.5); // Default size
+        if (nameLength > 20) {
+          nameFontSize = px(3);
+        } else if (nameLength > 15) {
+          nameFontSize = px(3.5);
+        } else if (nameLength > 10) {
+          nameFontSize = px(4);
+        }
+
         labelDiv.innerHTML = `
           <!-- Decorative frame around the name - this is the main design element -->
           <div style="
@@ -433,9 +447,9 @@ export async function generatePDF(
             <div style="position: absolute; top: ${px(0.5)}px; right: ${px(1)}px; font-size: ${px(2)}px; color: ${frameStyle.decor};">${frameStyle.decorSymbol}</div>
             <div style="position: absolute; top: ${px(0.5)}px; left: ${px(1)}px; font-size: ${px(2)}px; color: ${frameStyle.decor};">${frameStyle.decorSymbol}</div>
 
-            <!-- Name centered in frame -->
+            <!-- Name centered in frame - font size auto-adjusts for long names -->
             <div style="
-              font-size: ${px(4.5)}px;
+              font-size: ${nameFontSize}px;
               font-weight: bold;
               color: ${frameStyle.text};
               text-align: center;
@@ -456,10 +470,10 @@ export async function generatePDF(
           ${item.serialNumber ? `
             <div style="
               font-size: ${px(2.5)}px;
-              color: ${isMitzva ? '#666' : '#ccc'};
+              color: ${isMitzva ? '#333' : '#222'};
               text-align: center;
               margin-bottom: ${px(0.5)}px;
-              font-weight: bold;
+              font-weight: 800;
             ">
               #${item.serialNumber}
             </div>
@@ -536,4 +550,295 @@ export async function generatePDF(
   const typeName = typeNames[type] || "מדבקות";
   const fileName = `${typeName}-${timestamp}.pdf`;
   doc.save(fileName);
+}
+
+// Server-based PDF generator for Android
+// Sends the HTML to the server which converts it to PDF
+// This ensures 100% match with desktop output
+export async function generateServerPDF(
+  items: LabelItem[],
+  startPosition: number,
+  type: "mitzvot" | "members" | "combined",
+  customPositions?: Map<number, number>
+): Promise<Blob> {
+  const { width, height, columns, totalLabels, topMargin, leftMargin, rowGap, pageWidth, pageHeight } = LABEL_CONFIG;
+
+  // Calculate positions for each item (use custom positions if provided)
+  const getItemPosition = (index: number): number => {
+    return customPositions?.get(index) ?? (startPosition + index);
+  };
+
+  // Calculate total pages needed based on the last position used
+  const allPositions = items.map((_, index) => getItemPosition(index));
+  const lastPosition = Math.max(...allPositions);
+  const totalPages = Math.ceil(lastPosition / totalLabels);
+
+  // Use pixels for precise rendering - 96 DPI is standard screen DPI
+  const DPI = 96;
+  const MM_TO_PX = DPI / 25.4;
+
+  const pageWidthPx = Math.round(pageWidth * MM_TO_PX);
+  const pageHeightPx = Math.round(pageHeight * MM_TO_PX);
+  const widthPx = Math.round(width * MM_TO_PX);
+  const heightPx = Math.round(height * MM_TO_PX);
+  const topMarginPx = Math.round(topMargin * MM_TO_PX);
+  const leftMarginPx = Math.round(leftMargin * MM_TO_PX);
+  const rowGapPx = Math.round(rowGap * MM_TO_PX);
+
+  // Pixel conversions for label elements
+  const px = (mm: number) => Math.round(mm * MM_TO_PX);
+
+  // Build position to item map
+  const positionToItem = new Map<number, LabelItem>();
+  items.forEach((item, index) => {
+    const pos = getItemPosition(index);
+    positionToItem.set(pos, item);
+  });
+
+  // Generate HTML for all pages
+  let pagesHtml = '';
+
+  for (let pageNum = 0; pageNum < totalPages; pageNum++) {
+    let labelsHtml = '';
+
+    for (let pos = 1; pos <= totalLabels; pos++) {
+      const globalPos = pageNum * totalLabels + pos;
+      const item = positionToItem.get(globalPos);
+
+      let labelContent = '';
+      if (item) {
+        const isMitzva = item.isMitzva !== undefined ? item.isMitzva : (type === "mitzvot");
+
+        const frameStyle = isMitzva
+          ? {
+              bg: "linear-gradient(180deg, #FDF8F0 0%, #E3F2FD 100%)",
+              border: "#1E5AA8",
+              text: "#163D75",
+              decor: "#4FA8D9",
+              decorSymbol: "✡",
+            }
+          : {
+              bg: "linear-gradient(180deg, #1E5AA8 0%, #163D75 100%)",
+              border: "#4FA8D9",
+              text: "#E3F2FD",
+              decor: "#4FA8D9",
+              decorSymbol: "●",
+            };
+
+        const nameLength = item.name.length;
+        let nameFontSize = px(4.5);
+        if (nameLength > 20) {
+          nameFontSize = px(3);
+        } else if (nameLength > 15) {
+          nameFontSize = px(3.5);
+        } else if (nameLength > 10) {
+          nameFontSize = px(4);
+        }
+
+        labelContent = `
+          <div style="
+            width: 90%;
+            padding: ${px(2)}px ${px(3)}px;
+            background: ${frameStyle.bg};
+            border: ${px(0.8)}px solid ${frameStyle.border};
+            border-radius: ${px(2)}px;
+            box-shadow: 0 ${px(0.5)}px ${px(1)}px rgba(0,0,0,0.15);
+            position: relative;
+          ">
+            <div style="position: absolute; top: ${px(0.5)}px; right: ${px(1)}px; font-size: ${px(2)}px; color: ${frameStyle.decor};">${frameStyle.decorSymbol}</div>
+            <div style="position: absolute; top: ${px(0.5)}px; left: ${px(1)}px; font-size: ${px(2)}px; color: ${frameStyle.decor};">${frameStyle.decorSymbol}</div>
+            <div style="
+              font-size: ${nameFontSize}px;
+              font-weight: bold;
+              color: ${frameStyle.text};
+              text-align: center;
+              max-width: 100%;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+              ${isMitzva ? 'font-family: "David Libre", "Frank Ruhl Libre", serif;' : ''}
+            ">
+              ${item.name}
+            </div>
+          </div>
+          <div style="flex: 1;"></div>
+          ${item.serialNumber ? `
+            <div style="
+              font-size: ${px(2.5)}px;
+              color: ${isMitzva ? '#333' : '#222'};
+              text-align: center;
+              margin-bottom: ${px(0.5)}px;
+              font-weight: 800;
+            ">
+              #${item.serialNumber}
+            </div>
+          ` : ''}
+          <img src="${item.qrDataUrl}" style="width: ${px(14)}px; height: ${px(14)}px; margin-bottom: ${px(1)}px;" />
+        `;
+      }
+
+      labelsHtml += `
+        <div style="
+          width: ${widthPx}px;
+          height: ${heightPx}px;
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: ${px(4)}px;
+          background: transparent;
+        ">
+          ${labelContent}
+        </div>
+      `;
+    }
+
+    pagesHtml += `
+      <div style="
+        width: ${pageWidthPx}px;
+        height: ${pageHeightPx}px;
+        background: #ffffff;
+        position: relative;
+        font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
+        direction: rtl;
+        page-break-after: ${pageNum < totalPages - 1 ? 'always' : 'auto'};
+      ">
+        <div style="
+          position: absolute;
+          top: ${topMarginPx}px;
+          left: ${leftMarginPx}px;
+          display: grid;
+          grid-template-columns: repeat(${columns}, ${widthPx}px);
+          grid-auto-rows: ${heightPx}px;
+          row-gap: ${rowGapPx}px;
+          direction: rtl;
+        ">
+          ${labelsHtml}
+        </div>
+      </div>
+    `;
+  }
+
+  const fullHtml = `
+    <!DOCTYPE html>
+    <html dir="rtl" lang="he">
+    <head>
+      <meta charset="UTF-8">
+      <style>
+        @page {
+          size: A4;
+          margin: 0;
+        }
+        body {
+          margin: 0;
+          padding: 0;
+        }
+      </style>
+    </head>
+    <body>${pagesHtml}</body>
+    </html>
+  `;
+
+  // Send to server
+  const response = await fetch('https://yanshouf.com/api/html-to-pdf.php', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      html: fullHtml,
+      filename: `labels-${type}-${new Date().toISOString().slice(0, 10)}.pdf`,
+      returnBase64: false,
+    }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: 'Server error' }));
+    throw new Error(error.error || 'Failed to generate PDF on server');
+  }
+
+  return await response.blob();
+}
+
+// Simple PDF generator for Android - uses jsPDF directly without html2canvas
+// This avoids crashes on Android WebView
+export async function generateSimplePDF(
+  items: LabelItem[],
+  startPosition: number,
+  type: "mitzvot" | "members" | "combined"
+): Promise<Blob> {
+  const { width, height, columns, totalLabels, topMargin, leftMargin, rowGap, pageWidth, pageHeight } = LABEL_CONFIG;
+
+  // Create PDF
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: "a4",
+  });
+
+  // Calculate positions
+  const getItemPosition = (index: number): number => startPosition + index;
+  const allPositions = items.map((_, index) => getItemPosition(index));
+  const lastPosition = Math.max(...allPositions);
+  const totalPages = Math.ceil(lastPosition / totalLabels);
+
+  for (let pageNum = 0; pageNum < totalPages; pageNum++) {
+    if (pageNum > 0) {
+      doc.addPage();
+    }
+
+    // Draw labels on this page
+    for (let i = 0; i < items.length; i++) {
+      const position = getItemPosition(i);
+      const pageIndex = Math.floor((position - 1) / totalLabels);
+
+      if (pageIndex !== pageNum) continue;
+
+      const posOnPage = ((position - 1) % totalLabels);
+      const row = Math.floor(posOnPage / columns);
+      const col = columns - 1 - (posOnPage % columns); // RTL
+
+      const x = leftMargin + col * width;
+      const y = topMargin + row * (height + rowGap);
+
+      const item = items[i];
+      const isMitzva = item.isMitzva;
+
+      // Draw border
+      doc.setDrawColor(isMitzva ? 30 : 79, isMitzva ? 93 : 168, isMitzva ? 168 : 217);
+      doc.setLineWidth(0.3);
+      doc.roundedRect(x + 0.5, y + 0.5, width - 1, height - 1, 2, 2);
+
+      // Draw name - simple text (Hebrew might not render perfectly but will work)
+      doc.setFontSize(9);
+      doc.setTextColor(isMitzva ? 22 : 51, isMitzva ? 61 : 51, isMitzva ? 117 : 51);
+
+      // Center the name
+      const textWidth = doc.getTextWidth(item.name);
+      const textX = x + (width - textWidth) / 2;
+      doc.text(item.name, textX, y + 8);
+
+      // Draw serial number if exists
+      if (item.serialNumber) {
+        doc.setFontSize(8);
+        doc.setTextColor(51, 51, 51);
+        const serialText = `#${item.serialNumber}`;
+        const serialWidth = doc.getTextWidth(serialText);
+        doc.text(serialText, x + (width - serialWidth) / 2, y + 14);
+      }
+
+      // Draw QR code
+      try {
+        const qrSize = 14;
+        const qrX = x + (width - qrSize) / 2;
+        const qrY = y + height - qrSize - 2;
+        doc.addImage(item.qrDataUrl, 'PNG', qrX, qrY, qrSize, qrSize);
+      } catch (e) {
+        console.error('Failed to add QR image:', e);
+      }
+    }
+  }
+
+  return doc.output('blob');
 }

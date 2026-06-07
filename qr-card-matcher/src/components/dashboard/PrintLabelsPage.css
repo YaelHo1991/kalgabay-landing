@@ -161,7 +161,9 @@
   padding: 20px;
   display: flex;
   flex-direction: column;
-  min-height: 600px;
+  min-height: 500px;
+  max-height: calc(100vh - 350px); /* Prevent overflow beyond viewport */
+  overflow: hidden;
 }
 
 .page-preview-header {
@@ -214,15 +216,56 @@
   background: var(--blue-500);
 }
 
-/* A4 Page Container - allows scrolling */
-.a4-page-container {
+/* A4 Pages Container - allows scrolling for multiple pages */
+.a4-pages-container {
   flex: 1;
   overflow-y: auto;
   display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
   padding: 12px;
-  min-height: 500px;
+  padding-bottom: 24px;
+  min-height: 400px;
+  max-height: calc(100vh - 480px); /* Account for header, mode cards, footer */
+}
+
+/* Custom scrollbar for pages container */
+.a4-pages-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.a4-pages-container::-webkit-scrollbar-track {
+  background: var(--gray-200);
+  border-radius: 4px;
+}
+
+.a4-pages-container::-webkit-scrollbar-thumb {
+  background: var(--gray-400);
+  border-radius: 4px;
+}
+
+.a4-pages-container::-webkit-scrollbar-thumb:hover {
+  background: var(--gray-500);
+}
+
+/* A4 Page Wrapper - contains page label and page */
+.a4-page-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+/* Page number label */
+.page-number-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--blue-600);
+  background: var(--blue-100);
+  padding: 6px 16px;
+  border-radius: 20px;
 }
 
 /* A4 Page */
@@ -758,11 +801,8 @@
 }
 
 /* ========== FOOTER ========== */
+/* Default: not fixed (for Android where toolbar is at bottom) */
 .print-footer {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
   background: white;
   border-top: 1px solid var(--gray-200);
   padding: 16px 32px;
@@ -1014,49 +1054,26 @@
   width: fit-content;
 }
 
-/* ========== RESPONSIVE ========== */
-@media (max-width: 1200px) {
-  .mode-cards {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .print-content-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .selection-panel {
-    max-height: none;
-  }
+/* ========== DESKTOP SPECIFIC ========== */
+/* On desktop, footer should be at the bottom of the viewport */
+.print-labels-page.desktop .print-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
 }
 
-@media (max-width: 768px) {
-  .print-labels-page {
-    padding: 0 16px 100px;
-  }
+/* ========== RESPONSIVE ========== */
+/* Responsive media queries disabled - layout is now fixed for desktop Tauri app */
 
+/* ========== HIDE PRINT LABELS ON TOUCH DEVICES (Android) ========== */
+/* Hide mode cards on touch devices (Android) - both portrait and landscape */
+@media (pointer: coarse) {
   .mode-cards {
-    grid-template-columns: 1fr;
+    display: none !important;
   }
 
-  .page-preview-header {
-    flex-direction: column;
-    gap: 12px;
-    align-items: flex-start;
-  }
-
-  .print-footer {
-    flex-direction: column;
-    gap: 16px;
-    padding: 16px;
-  }
-
-  .print-actions {
-    width: 100%;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .footer-btn {
-    width: 100%;
+  .mode-selection {
+    display: none !important;
   }
 }

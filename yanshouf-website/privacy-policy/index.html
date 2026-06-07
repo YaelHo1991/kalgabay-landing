@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מדיניות פרטיות - קלגבאי | Privacy Policy - KalGabay</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            padding: 50px;
+            margin-bottom: 30px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 30px;
+            border-bottom: 2px solid #e8f5e9;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 36px;
+            color: white;
+            font-weight: bold;
+        }
+
+        h1 {
+            color: #2E7D32;
+            font-size: 2.2em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .last-updated {
+            background: #e8f5e9;
+            color: #2E7D32;
+            padding: 8px 16px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+
+        h2 {
+            color: #2E7D32;
+            font-size: 1.4em;
+            margin: 35px 0 15px;
+            padding-right: 15px;
+            border-right: 4px solid #4CAF50;
+        }
+
+        h3 {
+            color: #444;
+            font-size: 1.1em;
+            margin: 20px 0 10px;
+        }
+
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        ul {
+            margin: 15px 0;
+            padding-right: 25px;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+        .highlight-box {
+            background: #f1f8e9;
+            border: 1px solid #c5e1a5;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .warning-box {
+            background: #fff3e0;
+            border: 1px solid #ffcc80;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .scope-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .scope-table th,
+        .scope-table td {
+            padding: 12px 15px;
+            text-align: right;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .scope-table th {
+            background: #e8f5e9;
+            color: #2E7D32;
+            font-weight: 600;
+        }
+
+        .scope-table tr:hover {
+            background: #f5f5f5;
+        }
+
+        .contact-section {
+            background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+            border-radius: 12px;
+            padding: 30px;
+            text-align: center;
+            margin-top: 30px;
+        }
+
+        .contact-section a {
+            color: #2E7D32;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .contact-section a:hover {
+            text-decoration: underline;
+        }
+
+        .language-switch {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .language-switch a {
+            display: inline-block;
+            padding: 10px 25px;
+            background: white;
+            color: #2E7D32;
+            text-decoration: none;
+            border-radius: 25px;
+            margin: 0 5px;
+            transition: all 0.3s ease;
+            border: 2px solid #2E7D32;
+        }
+
+        .language-switch a:hover,
+        .language-switch a.active {
+            background: #2E7D32;
+            color: white;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        /* English Section */
+        .english-section {
+            direction: ltr;
+            text-align: left;
+        }
+
+        .english-section h2 {
+            padding-right: 0;
+            padding-left: 15px;
+            border-right: none;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .english-section ul {
+            padding-right: 0;
+            padding-left: 25px;
+        }
+
+        .english-section .scope-table th,
+        .english-section .scope-table td {
+            text-align: left;
+        }
+
+        @media (max-width: 600px) {
+            .card {
+                padding: 30px 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .scope-table th,
+            .scope-table td {
+                padding: 8px 10px;
+                font-size: 0.9em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="language-switch">
+            <a href="#hebrew" class="active">עברית</a>
+            <a href="#english">English</a>
+        </div>
+
+        <!-- Hebrew Version -->
+        <div class="card" id="hebrew">
+            <div class="header">
+                <div class="logo">ק</div>
+                <h1>מדיניות פרטיות</h1>
+                <p class="subtitle">אפליקציית קלגבאי (KalGabay)</p>
+                <span class="last-updated">עדכון אחרון: יוני 2026</span>
+            </div>
+
+            <h2>1. מבוא</h2>
+            <p>
+                ברוכים הבאים למדיניות הפרטיות של אפליקציית קלגבאי. אנו מכבדים את פרטיותך ומחויבים להגן על המידע האישי שלך. מדיניות זו מסבירה כיצד אנו אוספים, משתמשים ומגנים על המידע שלך.
+            </p>
+
+            <h2>2. מידע שאנו אוספים</h2>
+            <p>כאשר אתה מחבר את חשבון Gmail שלך לאפליקציה, אנו אוספים:</p>
+            <ul>
+                <li><strong>כתובת אימייל</strong> - לזיהוי החשבון המחובר ולשליחת מיילים</li>
+                <li><strong>שם המשתמש</strong> - כפי שמופיע בחשבון Google שלך, להצגה באפליקציה</li>
+            </ul>
+
+            <h2>3. הרשאות Google שאנו מבקשים</h2>
+            <p>האפליקציה מבקשת את ההרשאות הבאות מחשבון Google שלך:</p>
+
+            <table class="scope-table">
+                <tr>
+                    <th>הרשאה</th>
+                    <th>מטרה</th>
+                </tr>
+                <tr>
+                    <td>gmail.send</td>
+                    <td>שליחת תזכורות תשלום ללקוחות שלך דרך Gmail</td>
+                </tr>
+                <tr>
+                    <td>email</td>
+                    <td>זיהוי כתובת האימייל של החשבון המחובר</td>
+                </tr>
+                <tr>
+                    <td>profile</td>
+                    <td>הצגת שמך באפליקציה</td>
+                </tr>
+            </table>
+
+            <div class="highlight-box">
+                <h3>🔒 חשוב לדעת</h3>
+                <p>
+                    אנחנו <strong>לא</strong> קוראים את המיילים שלך, <strong>לא</strong> ניגשים לאנשי הקשר שלך,
+                    ו<strong>לא</strong> עושים שום פעולה מלבד שליחת מיילים שאתה יוזם באופן ידני.
+                </p>
+            </div>
+
+            <h2>4. כיצד אנו משתמשים במידע</h2>
+            <ul>
+                <li><strong>שליחת תזכורות</strong> - כאשר אתה בוחר לשלוח תזכורת תשלום ללקוח, האפליקציה שולחת מייל מחשבון Gmail שלך</li>
+                <li><strong>הצגת מידע</strong> - הצגת שמך וכתובת האימייל שלך בממשק האפליקציה</li>
+            </ul>
+
+            <h2>5. אחסון מידע</h2>
+            <div class="highlight-box">
+                <p>
+                    <strong>כל המידע נשמר מקומית במכשיר שלך בלבד.</strong><br>
+                    אנחנו לא שומרים את הטוקנים או המידע שלך בשרתים שלנו. הטוקנים נשמרים ב-LocalStorage של האפליקציה במחשב או בטלפון שלך.
+                </p>
+            </div>
+
+            <h2>6. שיתוף מידע עם צדדים שלישיים</h2>
+            <p>
+                אנחנו <strong>לא משתפים</strong> את המידע שלך עם צדדים שלישיים, לא מוכרים אותו, ולא משתמשים בו למטרות פרסום.
+            </p>
+
+            <h2>7. אבטחת מידע</h2>
+            <p>אנו נוקטים באמצעים הבאים להגנה על המידע שלך:</p>
+            <ul>
+                <li>שימוש בפרוטוקול OAuth 2.0 המאובטח של Google</li>
+                <li>אחסון מקומי בלבד - המידע לא עובר לשרתים חיצוניים</li>
+                <li>הצפנת התקשורת עם שרתי Google</li>
+            </ul>
+
+            <h2>8. הזכויות שלך</h2>
+            <p>יש לך את הזכות:</p>
+            <ul>
+                <li><strong>לנתק את החשבון</strong> - בכל עת דרך הגדרות האפליקציה</li>
+                <li><strong>לבטל גישה</strong> - דרך <a href="https://myaccount.google.com/permissions" target="_blank">הגדרות חשבון Google</a></li>
+                <li><strong>למחוק נתונים</strong> - הסרת האפליקציה תמחק את כל הנתונים המקומיים</li>
+            </ul>
+
+            <h2>9. שינויים במדיניות</h2>
+            <p>
+                אנו עשויים לעדכן מדיניות זו מעת לעת. שינויים משמעותיים יפורסמו באפליקציה. המשך השימוש באפליקציה לאחר שינויים מהווה הסכמה למדיניות המעודכנת.
+            </p>
+
+            <div class="contact-section">
+                <h2>10. יצירת קשר</h2>
+                <p>לשאלות בנושא פרטיות או לכל פנייה אחרת:</p>
+                <p>
+                    📧 אימייל: <a href="mailto:ayelho@gmail.com">ayelho@gmail.com</a>
+                </p>
+            </div>
+        </div>
+
+        <!-- English Version -->
+        <div class="card english-section" id="english">
+            <div class="header">
+                <div class="logo">K</div>
+                <h1>Privacy Policy</h1>
+                <p class="subtitle">KalGabay Application</p>
+                <span class="last-updated">Last Updated: June 2026</span>
+            </div>
+
+            <h2>1. Introduction</h2>
+            <p>
+                Welcome to the KalGabay Privacy Policy. We respect your privacy and are committed to protecting your personal information. This policy explains how we collect, use, and protect your data.
+            </p>
+
+            <h2>2. Information We Collect</h2>
+            <p>When you connect your Gmail account to the application, we collect:</p>
+            <ul>
+                <li><strong>Email address</strong> - To identify the connected account and send emails</li>
+                <li><strong>User name</strong> - As it appears in your Google account, for display in the app</li>
+            </ul>
+
+            <h2>3. Google Permissions We Request</h2>
+            <p>The application requests the following permissions from your Google account:</p>
+
+            <table class="scope-table">
+                <tr>
+                    <th>Permission</th>
+                    <th>Purpose</th>
+                </tr>
+                <tr>
+                    <td>gmail.send</td>
+                    <td>Send payment reminder emails to your customers via Gmail</td>
+                </tr>
+                <tr>
+                    <td>email</td>
+                    <td>Identify the email address of the connected account</td>
+                </tr>
+                <tr>
+                    <td>profile</td>
+                    <td>Display your name in the application</td>
+                </tr>
+            </table>
+
+            <div class="highlight-box">
+                <h3>🔒 Important</h3>
+                <p>
+                    We do <strong>NOT</strong> read your emails, we do <strong>NOT</strong> access your contacts,
+                    and we do <strong>NOT</strong> perform any action except sending emails that you manually initiate.
+                </p>
+            </div>
+
+            <h2>4. How We Use Your Information</h2>
+            <ul>
+                <li><strong>Sending reminders</strong> - When you choose to send a payment reminder to a customer, the app sends an email from your Gmail account</li>
+                <li><strong>Display information</strong> - Showing your name and email address in the app interface</li>
+            </ul>
+
+            <h2>5. Data Storage</h2>
+            <div class="highlight-box">
+                <p>
+                    <strong>All data is stored locally on your device only.</strong><br>
+                    We do not store your tokens or information on our servers. Tokens are stored in the application's LocalStorage on your computer or phone.
+                </p>
+            </div>
+
+            <h2>6. Third-Party Sharing</h2>
+            <p>
+                We do <strong>NOT share</strong> your information with third parties, do not sell it, and do not use it for advertising purposes.
+            </p>
+
+            <h2>7. Data Security</h2>
+            <p>We take the following measures to protect your information:</p>
+            <ul>
+                <li>Use of Google's secure OAuth 2.0 protocol</li>
+                <li>Local storage only - data does not pass through external servers</li>
+                <li>Encrypted communication with Google servers</li>
+            </ul>
+
+            <h2>8. Your Rights</h2>
+            <p>You have the right to:</p>
+            <ul>
+                <li><strong>Disconnect your account</strong> - At any time through the app settings</li>
+                <li><strong>Revoke access</strong> - Through <a href="https://myaccount.google.com/permissions" target="_blank">Google Account Settings</a></li>
+                <li><strong>Delete data</strong> - Uninstalling the app will delete all local data</li>
+            </ul>
+
+            <h2>9. Policy Changes</h2>
+            <p>
+                We may update this policy from time to time. Significant changes will be announced in the application. Continued use of the app after changes constitutes acceptance of the updated policy.
+            </p>
+
+            <div class="contact-section">
+                <h2>10. Contact Us</h2>
+                <p>For privacy questions or any other inquiries:</p>
+                <p>
+                    📧 Email: <a href="mailto:ayelho@gmail.com">ayelho@gmail.com</a>
+                </p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>© 2026 KalGabay. All rights reserved.</p>
+        </div>
+    </div>
+
+    <script>
+        // Smooth scroll to sections
+        document.querySelectorAll('.language-switch a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href').substring(1);
+                const targetElement = document.getElementById(targetId);
+
+                // Update active state
+                document.querySelectorAll('.language-switch a').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+
+                // Scroll to section
+                targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        });
+    </script>
+</body>
+</html>

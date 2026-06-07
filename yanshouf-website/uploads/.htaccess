@@ -1,0 +1,15 @@
+# Protect uploads directory
+Options -Indexes
+
+# Block PHP and script execution (Apache 2.4+ syntax)
+<FilesMatch "\.(?:php[345]?|phtml|pl|py|jsp|asp|sh|cgi)$">
+    Require all denied
+</FilesMatch>
+
+# Fallback for Apache 2.2
+<IfModule !mod_authz_core.c>
+    <FilesMatch "\.(?:php[345]?|phtml|pl|py|jsp|asp|sh|cgi)$">
+        Order Deny,Allow
+        Deny from all
+    </FilesMatch>
+</IfModule>

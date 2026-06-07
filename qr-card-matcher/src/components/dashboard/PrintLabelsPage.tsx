@@ -9,7 +9,7 @@ import {
 } from "../../database";
 import { LABEL_CONFIG } from "../LabelPositionSelector";
 import { PrintItem } from "../PrintPreviewModal";
-import { generatePDF } from "../../utils/pdfGenerator";
+import { generatePDF, generateServerPDF } from "../../utils/pdfGenerator";
 import { generateQRDataUrl } from "../QRGenerator";
 import "./PrintLabelsPage.css";
 
@@ -25,6 +25,7 @@ interface Printer {
 // Tauri invoke API - dynamically imported
 let tauriInvoke: ((cmd: string, args?: Record<string, unknown>) => Promise<unknown>) | null = null;
 let tauriApiLoaded = false;
+let isAndroidPlatform = false;
 
 // Load Tauri API (cached)
 const loadTauriApi = async () => {
@@ -33,6 +34,18 @@ const loadTauriApi = async () => {
     const tauriModule = await import("@tauri-apps/api/core");
     tauriInvoke = tauriModule.invoke;
     tauriApiLoaded = true;
+
+    // Check if running on Android
+    try {
+      const osModule = await import("@tauri-apps/plugin-os");
+      const platform = await osModule.platform();
+      isAndroidPlatform = platform === "android";
+      console.log("Platform detected:", platform, "isAndroid:", isAndroidPlatform);
+    } catch {
+      // OS plugin not available, check user agent
+      isAndroidPlatform = navigator.userAgent.toLowerCase().includes("android");
+    }
+
     return true;
   } catch {
     console.log("Tauri API not available (running in browser)");
@@ -46,15 +59,72 @@ let cachedMembers: Member[] | null = null;
 let cachedMitzvot: Mitzva[] | null = null;
 let cachedPrinters: Printer[] | null = null;
 
-// Get printers using our custom Rust command
+// Get printers using our custom Rust command (Windows only)
 const getSystemPrinters = async (): Promise<Printer[]> => {
   if (!tauriInvoke) return [];
+  // On Android, we don't enumerate printers - the system print dialog handles that
+  if (isAndroidPlatform) {
+    return [{ name: "Android Print", is_default: true }];
+  }
   try {
     const printers = await tauriInvoke("get_system_printers") as Printer[];
     return printers;
   } catch (error) {
     console.error("Failed to get printers:", error);
     return [];
+  }
+};
+
+// Print PDF on Android - use Web Share API to open PDF with print option
+const printPdfOnAndroid = async (pdfBase64: string): Promise<boolean> => {
+  try {
+    console.log("Printing PDF on Android, data length:", pdfBase64.length);
+
+    // Convert base64 to binary
+    const byteCharacters = atob(pdfBase64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const pdfBlob = new Blob([byteArray], { type: 'application/pdf' });
+
+    // Create file for sharing
+    const fileName = `מדבקות-${Date.now()}.pdf`;
+    const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
+
+    // Use Web Share API to open share dialog - user can choose PDF viewer or print app
+    if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+      await navigator.share({
+        files: [pdfFile],
+        title: 'הדפסת מדבקות',
+      });
+      console.log("PDF shared successfully via Web Share API");
+      return true;
+    }
+
+    // Fallback: Create object URL and open in new tab
+    const url = URL.createObjectURL(pdfBlob);
+    window.open(url, '_blank');
+
+    // Clean up after a delay
+    setTimeout(() => URL.revokeObjectURL(url), 5000);
+    return true;
+  } catch (error: unknown) {
+    console.error("Android print error:", error);
+
+    // If user cancelled the share, don't show error
+    if (error instanceof Error && error.name === 'AbortError') {
+      return false;
+    }
+
+    let errorMsg = "שגיאה לא ידועה";
+    if (error instanceof Error) {
+      errorMsg = error.message;
+    }
+
+    alert(`שגיאת הדפסה: ${errorMsg}`);
+    return false;
   }
 };
 
@@ -125,6 +195,7 @@ export function PrintLabelsPage({ onPrint, loading = false }: PrintLabelsPagePro
   const [selectedPrinter, setSelectedPrinter] = useState<string>("");
   const [loadingPrinters, setLoadingPrinters] = useState(true);
   const [printerApiAvailable, setPrinterApiAvailable] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
 
   // Custom positions for labels - allows moving individual labels
   const [customPositions, setCustomPositions] = useState<Map<number, number>>(new Map());
@@ -134,8 +205,11 @@ export function PrintLabelsPage({ onPrint, loading = false }: PrintLabelsPagePro
   // Load data on mount - use cache for instant display
   useEffect(() => {
     const loadData = async () => {
+      console.log("PrintLabelsPage: loadData called, cachedMembers:", cachedMembers?.length, "cachedMitzvot:", cachedMitzvot?.length);
+
       // If we have cached data, use it immediately (no loading state)
       if (cachedMembers && cachedMitzvot) {
+        console.log("PrintLabelsPage: Using cached data");
         setMembers(cachedMembers);
         setMitzvot(cachedMitzvot);
         setDataLoading(false);
@@ -144,8 +218,15 @@ export function PrintLabelsPage({ onPrint, loading = false }: PrintLabelsPagePro
         const lastPos = await getSetting("lastPrintPosition");
         if (lastPos) {
           const pos = parseInt(lastPos, 10);
-          setLastPrintPosition(pos);
-          setStartPosition(pos + 1 > LABEL_CONFIG.totalLabels ? 1 : pos + 1);
+          // If we've filled a full page, reset to start fresh and save to DB
+          if (pos >= LABEL_CONFIG.totalLabels) {
+            setSetting("lastPrintPosition", "0");
+            setLastPrintPosition(0);
+            setStartPosition(1);
+          } else {
+            setLastPrintPosition(pos);
+            setStartPosition(pos + 1);
+          }
         }
 
         // Refresh cache in background
@@ -159,12 +240,14 @@ export function PrintLabelsPage({ onPrint, loading = false }: PrintLabelsPagePro
       }
 
       // First load - show loading state
+      console.log("PrintLabelsPage: First load, fetching data from database");
       setDataLoading(true);
       try {
         const [allMembers, allMitzvot] = await Promise.all([
           getAllMembers(),
           getAllMitzvot(),
         ]);
+        console.log("PrintLabelsPage: Loaded members:", allMembers.length, "mitzvot:", allMitzvot.length);
         // Update cache
         cachedMembers = allMembers;
         cachedMitzvot = allMitzvot;
@@ -175,8 +258,15 @@ export function PrintLabelsPage({ onPrint, loading = false }: PrintLabelsPagePro
         const lastPos = await getSetting("lastPrintPosition");
         if (lastPos) {
           const pos = parseInt(lastPos, 10);
-          setLastPrintPosition(pos);
-          setStartPosition(pos + 1 > LABEL_CONFIG.totalLabels ? 1 : pos + 1);
+          // If we've filled a full page, reset to start fresh and save to DB
+          if (pos >= LABEL_CONFIG.totalLabels) {
+            setSetting("lastPrintPosition", "0");
+            setLastPrintPosition(0);
+            setStartPosition(1);
+          } else {
+            setLastPrintPosition(pos);
+            setStartPosition(pos + 1);
+          }
         }
       } catch (error) {
         console.error("Error loading data:", error);
@@ -213,6 +303,7 @@ export function PrintLabelsPage({ onPrint, loading = false }: PrintLabelsPagePro
       setLoadingPrinters(true);
       const available = await loadTauriApi();
       setPrinterApiAvailable(available);
+      setIsAndroid(isAndroidPlatform);
 
       if (available) {
         try {
@@ -320,14 +411,81 @@ export function PrintLabelsPage({ onPrint, loading = false }: PrintLabelsPagePro
 
     // Calculate last position
     const lastPos = calculateLastPosition();
-    await setSetting("lastPrintPosition", lastPos.toString());
-    setLastPrintPosition(lastPos);
 
-    // Send directly to print with selected printer
+    // On Android, use the Android print plugin
+    if (isAndroid) {
+      setPdfLoading(true);
+      try {
+        // Generate QR codes for all items
+        const labelItems = await Promise.all(
+          items.map(async (item) => ({
+            name: item.name,
+            qrDataUrl: await generateQRDataUrl(item.code, 200),
+            serialNumber: item.serialNumber,
+            isMitzva: item.isMitzva,
+          }))
+        );
+
+        // Determine type based on print mode
+        const pdfType = printMode === "mitzvot" ? "mitzvot" :
+                        printMode === "combined" ? "combined" : "members";
+
+        // Generate PDF using server (ensures 100% match with desktop)
+        const pdfBlob = await generateServerPDF(labelItems, startPosition, pdfType, customPositions);
+
+        if (pdfBlob) {
+          // Convert blob to base64
+          const reader = new FileReader();
+          const base64Promise = new Promise<string>((resolve, reject) => {
+            reader.onload = () => {
+              const result = reader.result as string;
+              // Remove the data URL prefix (data:application/pdf;base64,)
+              const base64 = result.split(',')[1];
+              resolve(base64);
+            };
+            reader.onerror = reject;
+          });
+          reader.readAsDataURL(pdfBlob);
+
+          const base64Data = await base64Promise;
+          const success = await printPdfOnAndroid(base64Data);
+
+          if (success) {
+            // Update position only on successful print
+            if (lastPos >= LABEL_CONFIG.totalLabels) {
+              await setSetting("lastPrintPosition", "0");
+              setLastPrintPosition(0);
+              setStartPosition(1);
+            } else {
+              await setSetting("lastPrintPosition", lastPos.toString());
+              setLastPrintPosition(lastPos);
+              setStartPosition(lastPos + 1);
+            }
+            setCustomPositions(new Map());
+            setSelectedLabelIndex(null);
+          }
+        }
+      } catch (error) {
+        console.error("Error printing on Android:", error);
+      } finally {
+        setPdfLoading(false);
+      }
+      return;
+    }
+
+    // On desktop, send directly to print with selected printer
     onPrint(items, startPosition, selectedPrinter || undefined, customPositions);
 
-    // Reset for next batch
-    setStartPosition(lastPos + 1 > LABEL_CONFIG.totalLabels ? 1 : lastPos + 1);
+    // Reset for next batch - if we've filled a page, start fresh
+    if (lastPos >= LABEL_CONFIG.totalLabels) {
+      await setSetting("lastPrintPosition", "0");
+      setLastPrintPosition(0);
+      setStartPosition(1);
+    } else {
+      await setSetting("lastPrintPosition", lastPos.toString());
+      setLastPrintPosition(lastPos);
+      setStartPosition(lastPos + 1);
+    }
     setCustomPositions(new Map());
     setSelectedLabelIndex(null);
   };
@@ -339,7 +497,8 @@ export function PrintLabelsPage({ onPrint, loading = false }: PrintLabelsPagePro
   };
 
   // Check if printer is available for printing
-  const isPrinterAvailable = printerApiAvailable && printers.length > 0 && selectedPrinter;
+  // On Android, always allow printing (system print dialog handles printer selection)
+  const isPrinterAvailable = isAndroid || (printerApiAvailable && printers.length > 0 && selectedPrinter);
 
   // Calculate the last position based on items and custom positions
   const calculateLastPosition = (): number => {
@@ -374,16 +533,71 @@ export function PrintLabelsPage({ onPrint, loading = false }: PrintLabelsPagePro
       const pdfType = printMode === "mitzvot" ? "mitzvot" :
                       printMode === "combined" ? "combined" : "members";
 
-      // Generate and download PDF
-      await generatePDF(labelItems, startPosition, pdfType, customPositions);
+      // On Android: use server-based PDF generation (100% match with desktop)
+      if (isAndroid) {
+        console.log('[PDF] Android detected, using server-based PDF generation...');
+        console.log('[PDF] tauriInvoke available:', !!tauriInvoke);
+        const pdfBlob = await generateServerPDF(labelItems, startPosition, pdfType, customPositions);
+        console.log('[PDF] Blob generated:', pdfBlob ? `${pdfBlob.size} bytes` : 'null');
+
+        if (pdfBlob && tauriInvoke) {
+          const fileName = `labels-${Date.now()}.pdf`;
+          console.log('[PDF] Converting to base64...');
+
+          // Convert blob to base64
+          const arrayBuffer = await pdfBlob.arrayBuffer();
+          const base64 = btoa(
+            new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), '')
+          );
+          console.log('[PDF] Base64 length:', base64.length);
+
+          // Call Rust function to save and open PDF
+          try {
+            console.log('[PDF] Calling save_and_open_pdf...');
+            const result = await tauriInvoke('save_and_open_pdf', {
+              pdfBase64: base64,
+              fileName: fileName
+            });
+            console.log('[PDF] Result:', result);
+          } catch (openError) {
+            console.error('[PDF] Failed to open PDF:', openError);
+            // Fallback: try Web Share API
+            try {
+              console.log('[PDF] Trying Web Share API fallback...');
+              const pdfFile = new File([pdfBlob], fileName, { type: 'application/pdf' });
+              if (navigator.share && navigator.canShare && navigator.canShare({ files: [pdfFile] })) {
+                await navigator.share({
+                  files: [pdfFile],
+                  title: 'מדבקות קלגבאי',
+                });
+              } else {
+                console.log('[PDF] Web Share API not available');
+              }
+            } catch (shareError) {
+              console.log('[PDF] Share API also failed:', shareError);
+            }
+          }
+        } else {
+          console.log('[PDF] Missing blob or tauriInvoke');
+        }
+      } else {
+        // On desktop: download normally
+        await generatePDF(labelItems, startPosition, pdfType, customPositions);
+      }
 
       // Save last position - same as print
       const lastPos = calculateLastPosition();
-      await setSetting("lastPrintPosition", lastPos.toString());
-      setLastPrintPosition(lastPos);
 
-      // Reset start position for next batch
-      setStartPosition(lastPos + 1 > LABEL_CONFIG.totalLabels ? 1 : lastPos + 1);
+      // Reset for next batch - if we've filled a page, start fresh
+      if (lastPos >= LABEL_CONFIG.totalLabels) {
+        await setSetting("lastPrintPosition", "0");
+        setLastPrintPosition(0);
+        setStartPosition(1);
+      } else {
+        await setSetting("lastPrintPosition", lastPos.toString());
+        setLastPrintPosition(lastPos);
+        setStartPosition(lastPos + 1);
+      }
 
       // Clear selections
       setCustomPositions(new Map());
@@ -522,7 +736,7 @@ export function PrintLabelsPage({ onPrint, loading = false }: PrintLabelsPagePro
   }
 
   return (
-    <div className="print-labels-page">
+    <div className={`print-labels-page ${!isAndroid ? 'desktop' : ''}`}>
       {/* Header */}
       <header className="print-header">
         <div className="print-header-content">
@@ -538,7 +752,8 @@ export function PrintLabelsPage({ onPrint, loading = false }: PrintLabelsPagePro
         </div>
       </header>
 
-      {/* Mode Selection */}
+      {/* Mode Selection - Hidden on Android (printing not yet supported) */}
+      {!isAndroid && (
       <div className="mode-selection">
         <div className="mode-cards">
           <button
@@ -598,6 +813,7 @@ export function PrintLabelsPage({ onPrint, loading = false }: PrintLabelsPagePro
           </button>
         </div>
       </div>
+      )}
 
       {/* Content Layout */}
       <div className="print-content-layout">
@@ -631,50 +847,79 @@ export function PrintLabelsPage({ onPrint, loading = false }: PrintLabelsPagePro
             </div>
           </div>
 
-          <div className="a4-page-container">
-          <div className="a4-page">
-            <div className="label-grid">
-              {Array.from({ length: LABEL_CONFIG.totalLabels }, (_, i) => {
-                const pos = i + 1;
-                const isUsed = pos <= lastPrintPosition; // תאים שנוצלו הם רק אלה שהודפסו בפועל
-                const itemData = getItemAtPosition(pos);
-                const hasItem = itemData !== null;
-                const isSelected = hasItem && selectedLabelIndex === itemData.index;
+          <div className="a4-pages-container">
+            {(() => {
+              // Calculate how many pages are needed
+              const items = getPreviewItems();
+              const totalItems = items.length;
+
+              // Find the highest position (either custom or default)
+              let maxPosition = startPosition + totalItems - 1;
+              if (customPositions.size > 0) {
+                const customMax = Math.max(...Array.from(customPositions.values()));
+                maxPosition = Math.max(maxPosition, customMax);
+              }
+
+              // Calculate number of pages needed
+              const labelsPerPage = LABEL_CONFIG.totalLabels;
+              const numPages = Math.max(1, Math.ceil(maxPosition / labelsPerPage));
+
+              return Array.from({ length: numPages }, (_, pageIndex) => {
+                const pageNumber = pageIndex + 1;
+                const pageStartPos = pageIndex * labelsPerPage + 1;
 
                 return (
-                  <div
-                    key={pos}
-                    className={`label-cell ${isUsed ? "used" : ""} ${hasItem ? "has-item" : ""} ${isSelected ? "selected-for-move" : ""}`}
-                    onClick={() => handleCellClick(pos, isUsed)}
-                    title={isUsed ? "תא נוצל" : hasItem ? `${itemData.item.name} - לחץ להזיז` : selectedLabelIndex !== null ? "לחץ להעביר לכאן" : `תא ${pos}`}
-                  >
-                    {isUsed ? (
-                      <div className="label-used-mark">
-                        <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
-                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
-                        </svg>
-                      </div>
-                    ) : hasItem ? (
-                      <div className={`label-content ${itemData.item.isMitzva ? "mitzva" : "member"}`}>
-                        {/* Name frame with decorations - matching print output */}
-                        <div className="label-name-frame">
-                          <span className="label-decor">{itemData.item.isMitzva ? "✡" : "●"}</span>
-                          <div className="label-name">{itemData.item.name}</div>
-                          <span className="label-decor">{itemData.item.isMitzva ? "✡" : "●"}</span>
-                        </div>
-                        {/* QR code at bottom */}
-                        <div className="label-qr">
-                          <QRIcon />
-                        </div>
-                      </div>
-                    ) : (
-                      <span className="label-number">{pos}</span>
+                  <div key={pageIndex} className="a4-page-wrapper">
+                    {numPages > 1 && (
+                      <div className="page-number-label">עמוד {pageNumber} מתוך {numPages}</div>
                     )}
+                    <div className="a4-page">
+                      <div className="label-grid">
+                        {Array.from({ length: LABEL_CONFIG.totalLabels }, (_, i) => {
+                          const pos = pageStartPos + i;
+                          const isUsed = pos <= lastPrintPosition; // תאים שנוצלו הם רק אלה שהודפסו בפועל
+                          const itemData = getItemAtPosition(pos);
+                          const hasItem = itemData !== null;
+                          const isSelected = hasItem && selectedLabelIndex === itemData.index;
+
+                          return (
+                            <div
+                              key={pos}
+                              className={`label-cell ${isUsed ? "used" : ""} ${hasItem ? "has-item" : ""} ${isSelected ? "selected-for-move" : ""}`}
+                              onClick={() => handleCellClick(pos, isUsed)}
+                              title={isUsed ? "תא נוצל" : hasItem ? `${itemData.item.name} - לחץ להזיז` : selectedLabelIndex !== null ? "לחץ להעביר לכאן" : `תא ${pos}`}
+                            >
+                              {isUsed ? (
+                                <div className="label-used-mark">
+                                  <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
+                                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                                  </svg>
+                                </div>
+                              ) : hasItem ? (
+                                <div className={`label-content ${itemData.item.isMitzva ? "mitzva" : "member"}`}>
+                                  {/* Name frame with decorations - matching print output */}
+                                  <div className="label-name-frame">
+                                    <span className="label-decor">{itemData.item.isMitzva ? "✡" : "●"}</span>
+                                    <div className="label-name">{itemData.item.name}</div>
+                                    <span className="label-decor">{itemData.item.isMitzva ? "✡" : "●"}</span>
+                                  </div>
+                                  {/* QR code at bottom */}
+                                  <div className="label-qr">
+                                    <QRIcon />
+                                  </div>
+                                </div>
+                              ) : (
+                                <span className="label-number">{pos}</span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 );
-              })}
-            </div>
-          </div>
+              });
+            })()}
           </div>
         </div>
 
@@ -844,7 +1089,7 @@ export function PrintLabelsPage({ onPrint, loading = false }: PrintLabelsPagePro
                 </svg>
               </span>
             )}
-            {loading ? "מדפיס..." : !isPrinterAvailable ? "אין מדפסת" : "הדפס"}
+            {loading || pdfLoading ? "מדפיס..." : !isPrinterAvailable ? "אין מדפסת" : "הדפס"}
           </button>
         </div>
       </footer>
